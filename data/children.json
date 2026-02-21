@@ -1,0 +1,229 @@
+{
+  "children": [
+    {
+      "name": "Child 1",
+      "birth_year": 2026,
+      "initial_investment": 2500.00,
+      "monthly_contribution": 200.00,
+      "fund_provider": "Vanguard",
+      "phases": {
+        "phase_1": {
+          "name": "Aggressive Growth (Age 0-12)",
+          "end_age": 12,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.70,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.30,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            }
+          }
+        },
+        "phase_2": {
+          "name": "Moderate Growth (Age 13-17)",
+          "end_age": 17,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.60,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.20,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            },
+            "us_bonds": {
+              "pct": 0.20,
+              "ticker": "VBTLX",
+              "label": "Vanguard Total US Bond Market Index",
+              "expected_annual_return": 0.04
+            }
+          }
+        },
+        "phase_3": {
+          "name": "Conservative (Age 18+)",
+          "end_age": 20,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.40,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.20,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            },
+            "us_bonds": {
+              "pct": 0.40,
+              "ticker": "VBTLX",
+              "label": "Vanguard Total US Bond Market Index",
+              "expected_annual_return": 0.04
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Child 2",
+      "birth_year": 2029,
+      "initial_investment": 2500.00,
+      "monthly_contribution": 200.00,
+      "fund_provider": "Vanguard",
+      "phases": {
+        "phase_1": {
+          "name": "Aggressive Growth (Age 0-12)",
+          "end_age": 12,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.70,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.30,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            }
+          }
+        },
+        "phase_2": {
+          "name": "Moderate Growth (Age 13-17)",
+          "end_age": 17,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.60,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.20,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            },
+            "us_bonds": {
+              "pct": 0.20,
+              "ticker": "VBTLX",
+              "label": "Vanguard Total US Bond Market Index",
+              "expected_annual_return": 0.04
+            }
+          }
+        },
+        "phase_3": {
+          "name": "Conservative (Age 18+)",
+          "end_age": 20,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.40,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.20,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            },
+            "us_bonds": {
+              "pct": 0.40,
+              "ticker": "VBTLX",
+              "label": "Vanguard Total US Bond Market Index",
+              "expected_annual_return": 0.04
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Child 3",
+      "birth_year": 2032,
+      "initial_investment": 2500.00,
+      "monthly_contribution": 200.00,
+      "fund_provider": "Vanguard",
+      "phases": {
+        "phase_1": {
+          "name": "Aggressive Growth (Age 0-12)",
+          "end_age": 12,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.70,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.30,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            }
+          }
+        },
+        "phase_2": {
+          "name": "Moderate Growth (Age 13-17)",
+          "end_age": 17,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.60,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.20,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            },
+            "us_bonds": {
+              "pct": 0.20,
+              "ticker": "VBTLX",
+              "label": "Vanguard Total US Bond Market Index",
+              "expected_annual_return": 0.04
+            }
+          }
+        },
+        "phase_3": {
+          "name": "Conservative (Age 18+)",
+          "end_age": 20,
+          "allocation": {
+            "us_total_market": {
+              "pct": 0.40,
+              "ticker": "VTSAX",
+              "label": "Vanguard Total US Stock Market Index",
+              "expected_annual_return": 0.10
+            },
+            "international": {
+              "pct": 0.20,
+              "ticker": "VTIAX",
+              "label": "Vanguard Total Intl Stock Market Index",
+              "expected_annual_return": 0.08
+            },
+            "us_bonds": {
+              "pct": 0.40,
+              "ticker": "VBTLX",
+              "label": "Vanguard Total US Bond Market Index",
+              "expected_annual_return": 0.04
+            }
+          }
+        }
+      }
+    }
+  ]
+}

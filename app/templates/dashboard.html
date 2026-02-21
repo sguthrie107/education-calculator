@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-controls">
+    <div class="control-group">
+        <label for="childSelect">View:</label>
+        <select id="childSelect" onchange="onChildSelectionChange()">
+            <option value="all" selected>All Children</option>
+            {% if children %}
+                {% for child in children %}
+                <option value="{{ child }}">{{ child }}</option>
+                {% endfor %}
+            {% endif %}
+        </select>
+    </div>
+</div>
+
+<div class="chart-container">
+    <canvas id="educationChart"></canvas>
+</div>
+
+<div class="below-grid">
+    <div id="phaseSection" class="phase-section">
+        <h2>Investment Phase Allocations</h2>
+        <div id="phaseCards" class="phase-cards"></div>
+    </div>
+
+    <div id="snapshotSection" class="snapshot-section">
+        <h2>Account Snapshot</h2>
+        <div id="snapshotCards" class="snapshot-cards"></div>
+    </div>
+</div>
+
+<div id="deltaTable" class="delta-section">
+    <div class="delta-header">
+        <div>
+            <h2>Projected vs Actual by Child</h2>
+            <p>Rows are grouped per child and include phase, projected balance, actual balance, and delta.</p>
+        </div>
+        <button onclick="showBalanceForm()" class="btn-primary" id="addBalanceBtn">Add Actual Balance</button>
+    </div>
+    <div id="deltaContent">
+        <p class="loading">Loading comparison data...</p>
+    </div>
+</div>
+
+<!-- Balance entry form modal -->
+<div id="balanceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="hideBalanceForm()">&times;</span>
+        <h2>Add Actual Balance</h2>
+        <form id="balanceForm" onsubmit="submitBalance(event)">
+            <div class="form-group">
+                <label for="balanceChild">Child:</label>
+                <select id="balanceChild" required>
+                    {% if children %}
+                        {% for child in children %}
+                        <option value="{{ child }}">{{ child }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="balanceYear">Year:</label>
+                <select id="balanceYear" required>
+                    <option value="">-- Select a year --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="balanceAmount">Education Account Balance ($):</label>
+                <input type="number" id="balanceAmount" min="0" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="balanceNotes">Notes (optional):</label>
+                <textarea id="balanceNotes" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" class="btn-secondary" onclick="hideBalanceForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit balance modal -->
+<div id="editBalanceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="hideEditBalanceForm()">&times;</span>
+        <h2>Edit Balance Entry</h2>
+        <form id="editBalanceForm" onsubmit="submitEditBalance(event)">
+            <input type="hidden" id="editBalanceId">
+
+            <div class="form-group">
+                <label for="editYear">Year:</label>
+                <input type="number" id="editYear" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="editAmount">Balance ($):</label>
+                <input type="number" id="editAmount" min="0" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="editNotes">Notes (optional):</label>
+                <textarea id="editNotes" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Update</button>
+                <button type="button" class="btn-secondary" onclick="hideEditBalanceForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/chart.js"></script>
+<script>
+    const initialData = {{ initial_data | tojson | safe }};
+
+    function renderInitialData() {
+        try {
+            if (!initialData || !initialData.children || !initialData.children.length) {
+                document.getElementById('deltaContent').innerHTML =
+                    '<p class="loading">No children configured. Add entries to data/children.json.</p>';
+                return;
+            }
+            renderAllChildrenChart(initialData.children, initialData.household_loan || null);
+            renderPhaseCards(initialData.children);
+            renderSnapshotCards(initialData.children, initialData.household_loan || null);
+            renderAllDeltaTables(initialData.children);
+        } catch (error) {
+            document.getElementById('deltaContent').innerHTML =
+                '<p style="color: var(--danger-color);">Error: ' + error.message + '</p>';
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderInitialData);
+    } else {
+        renderInitialData();
+    }
+    setTimeout(renderInitialData, 100);
+</script>
+{% endblock %}
