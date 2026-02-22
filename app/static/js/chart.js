@@ -17,6 +17,12 @@ const childColors = [
 ];
 
 const fmt = (n) => '$' + Math.round(n).toLocaleString();
+const fmtYear = (n) => {
+    if (!Number.isFinite(n)) return '';
+    const rounded = Math.round(n);
+    if (Math.abs(n - rounded) < 0.01) return String(rounded);
+    return n.toFixed(2);
+};
 
 // ── Chart rendering ────────────────────────────────────────────
 
@@ -31,22 +37,21 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
         chartInstance = null;
     }
 
-    // Collect all years across children
-    const allYears = new Set();
-    childrenData.forEach(c => c.projected.forEach(p => allYears.add(p.year)));
-    const labels = [...allYears].sort((a, b) => a - b);
-
     const datasets = [];
+    const allXValues = [];
 
     childrenData.forEach((child, idx) => {
         const color = childColors[idx % childColors.length];
-        const projByYear = {};
-        child.projected.forEach(p => { projByYear[p.year] = p.balance; });
+        const projectedPoints = (child.projected || []).map(p => ({
+            x: Number(p.year),
+            y: Number(p.balance),
+        }));
+        projectedPoints.forEach(point => allXValues.push(point.x));
 
         // Projected line
         datasets.push({
             label: child.child_name + ' (Projected)',
-            data: labels.map(y => projByYear[y] ?? null),
+            data: projectedPoints,
             borderColor: color.border,
             backgroundColor: color.bg,
             borderWidth: 2.5,
@@ -59,11 +64,14 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
 
         // Actual dots (if any)
         if (child.actual && child.actual.length > 0) {
-            const actByYear = {};
-            child.actual.forEach(a => { actByYear[a.year] = a.balance; });
+            const actualPoints = child.actual.map(a => ({
+                x: Number(a.year),
+                y: Number(a.balance),
+            }));
+            actualPoints.forEach(point => allXValues.push(point.x));
             datasets.push({
                 label: child.child_name + ' (Actual)',
-                data: labels.map(y => actByYear[y] ?? null),
+                data: actualPoints,
                 borderColor: color.actual,
                 backgroundColor: color.actual,
                 borderWidth: 0,
@@ -76,31 +84,50 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
         }
     });
 
-    if (householdLoanProjection && householdLoanProjection.scenario) {
-        const scenario = householdLoanProjection.scenario;
-        const balanceByYear = {};
-        scenario.years.forEach(point => { balanceByYear[point.year] = point.balance; });
+    if (householdLoanProjection) {
+        const scenarioLines = Array.isArray(householdLoanProjection.scenarios)
+            ? householdLoanProjection.scenarios
+            : (householdLoanProjection.scenario ? [householdLoanProjection.scenario] : []);
 
-        datasets.push({
-            label: `Student Loan Balance ($${Math.round(householdLoanProjection.assumed_total_monthly_payment || 2000).toLocaleString()}/mo)` ,
-            data: labels.map(y => balanceByYear[y] ?? null),
-            borderColor: '#7C3AED',
-            borderDash: [8, 6],
-            backgroundColor: 'rgba(0, 0, 0, 0)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.25,
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            spanGaps: false,
+        const loanScenarioStyles = {
+            1500: { color: '#9333EA', dash: [10, 6], width: 2 },
+            2000: { color: '#7C3AED', dash: [8, 6], width: 2 },
+            2500: { color: '#5B21B6', dash: [4, 4], width: 2.3 },
+        };
+
+        scenarioLines.forEach((scenario) => {
+            const payment = Math.round(Number(scenario.monthly_payment_total || 0));
+            const style = loanScenarioStyles[payment] || { color: '#6D28D9', dash: [8, 6], width: 2 };
+            const lineData = (scenario.years || []).map(point => ({
+                x: Number(point.year),
+                y: Number(point.balance),
+            }));
+            lineData.forEach(point => allXValues.push(point.x));
+
+            datasets.push({
+                label: `Student Loan Balance ($${payment.toLocaleString()}/mo)`,
+                data: lineData,
+                borderColor: style.color,
+                borderDash: style.dash,
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                borderWidth: style.width,
+                fill: false,
+                tension: 0.2,
+                pointRadius: 2,
+                pointHoverRadius: 5,
+                spanGaps: false,
+            });
         });
     }
+
+    const minX = allXValues.length ? Math.min(...allXValues) : new Date().getFullYear();
+    const maxX = allXValues.length ? Math.max(...allXValues) : minX + 1;
 
     // Add phase boundary annotations via vertical dashed segments
     const ctx = canvas.getContext('2d');
     chartInstance = new Chart(ctx, {
         type: 'line',
-        data: { labels, datasets },
+        data: { datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -121,15 +148,21 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
                     callbacks: {
                         label: function(context) {
                             if (context.parsed.y == null) return null;
-                            return context.dataset.label + ': ' + fmt(context.parsed.y);
+                            return context.dataset.label + ': ' + fmt(context.parsed.y) + ' @ ' + fmtYear(context.parsed.x);
                         },
                     },
                 },
             },
             scales: {
                 x: {
+                    type: 'linear',
+                    min: Math.floor(minX),
+                    max: Math.ceil(maxX),
                     grid: { color: 'rgba(232, 221, 208, 0.5)' },
-                    ticks: { font: { size: 12, weight: '500' } },
+                    ticks: {
+                        font: { size: 12, weight: '500' },
+                        callback: function(value) { return fmtYear(Number(value)); },
+                    },
                 },
                 y: {
                     grid: { color: 'rgba(232, 221, 208, 0.5)' },
@@ -280,6 +313,18 @@ function renderSnapshotCards(childrenData, householdLoanProjection = null) {
 
     if (householdLoanProjection && householdLoanProjection.scenario) {
         const scenario = householdLoanProjection.scenario;
+        const loanScenarios = Array.isArray(householdLoanProjection.scenarios)
+            ? householdLoanProjection.scenarios
+            : [scenario];
+        const exampleSummary = loanScenarios
+            .map(item => {
+                const payment = Math.round(Number(item.monthly_payment_total || 0));
+                const payoffYear = Number(item.payoff_year_estimate || 0);
+                const payoffLabel = payoffYear > 0 ? fmtYear(payoffYear) : 'N/A';
+                return `<div class="snapshot-item"><span class="snapshot-label">$${payment.toLocaleString()}/mo Payoff</span><span class="snapshot-value">${payoffLabel}</span></div>`;
+            })
+            .join('');
+
         html += `<div class="snapshot-card snapshot-card-household">
             <h3>Household Student Loan</h3>
             <div class="snapshot-grid">
@@ -297,12 +342,13 @@ function renderSnapshotCards(childrenData, householdLoanProjection = null) {
                 </div>
                 <div class="snapshot-item">
                     <span class="snapshot-label">Projected Payoff Year</span>
-                    <span class="snapshot-value">${scenario.payoff_year_estimate || 'N/A'}</span>
+                    <span class="snapshot-value">${fmtYear(Number(scenario.payoff_year_estimate || 0))}</span>
                 </div>
                 <div class="snapshot-item">
                     <span class="snapshot-label">Months to Payoff</span>
                     <span class="snapshot-value">${scenario.months_to_payoff || 0} months</span>
                 </div>
+                ${exampleSummary}
             </div>
         </div>`;
     }
