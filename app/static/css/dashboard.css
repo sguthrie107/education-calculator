@@ -253,6 +253,67 @@ header p {
     height: 100%;
 }
 
+/* ── Split legend boxes ─────────────────────────────────────── */
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 auto 1rem auto;
+    max-width: 1400px;
+}
+
+.legend-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.legend-card h3 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.55rem;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.8rem;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.legend-swatch {
+    width: 22px;
+    height: 0;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.legend-swatch.dot {
+    width: 10px;
+    height: 10px;
+    border-top: 0;
+    border-radius: 999px;
+    background: var(--primary-color);
+}
+
+@media (max-width: 900px) {
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ── Dashboard controls ─────────────────────────────────────── */
 .dashboard-controls {
     background: var(--surface);

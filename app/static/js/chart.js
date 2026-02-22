@@ -24,6 +24,35 @@ const fmtYear = (n) => {
     return n.toFixed(2);
 };
 
+function renderSplitLegend(datasets) {
+    const accountsTarget = document.getElementById('legend529');
+    const loansTarget = document.getElementById('legendLoans');
+    if (!accountsTarget || !loansTarget) return;
+
+    const toItem = (dataset) => {
+        const color = dataset.borderColor || dataset.backgroundColor || '#8E3A62';
+        const dashed = Array.isArray(dataset.borderDash) && dataset.borderDash.length > 0;
+        const isPointOnly = dataset.showLine === false;
+        const style = isPointOnly
+            ? `style="background:${color};"`
+            : `style="border-top-color:${color};${dashed ? 'border-top-style:dashed;' : ''}"`;
+        const swatchClass = isPointOnly ? 'legend-swatch dot' : 'legend-swatch';
+        return `<span class="legend-item"><span class="${swatchClass}" ${style}></span>${dataset.label}</span>`;
+    };
+
+    const accountItems = datasets
+        .filter(ds => ds.datasetType === 'education')
+        .map(toItem)
+        .join('');
+    const loanItems = datasets
+        .filter(ds => ds.datasetType === 'loan')
+        .map(toItem)
+        .join('');
+
+    accountsTarget.innerHTML = accountItems || '<span class="legend-item">No 529 series</span>';
+    loansTarget.innerHTML = loanItems || '<span class="legend-item">No loan payoff series</span>';
+}
+
 // ── Chart rendering ────────────────────────────────────────────
 
 function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
@@ -52,6 +81,7 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
         datasets.push({
             label: child.child_name + ' (Projected)',
             data: projectedPoints,
+            datasetType: 'education',
             borderColor: color.border,
             backgroundColor: color.bg,
             borderWidth: 2.5,
@@ -72,6 +102,7 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             datasets.push({
                 label: child.child_name + ' (Actual)',
                 data: actualPoints,
+                datasetType: 'education',
                 borderColor: color.actual,
                 backgroundColor: color.actual,
                 borderWidth: 0,
@@ -90,14 +121,14 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             : (householdLoanProjection.scenario ? [householdLoanProjection.scenario] : []);
 
         const loanScenarioStyles = {
-            1500: { color: '#9333EA', dash: [10, 6], width: 2 },
-            2000: { color: '#7C3AED', dash: [8, 6], width: 2 },
-            2500: { color: '#5B21B6', dash: [4, 4], width: 2.3 },
+            1500: { color: '#DC2626', dash: [10, 6], width: 2 },
+            2000: { color: '#0891B2', dash: [8, 6], width: 2 },
+            2500: { color: '#16A34A', dash: [4, 4], width: 2.3 },
         };
 
         scenarioLines.forEach((scenario) => {
             const payment = Math.round(Number(scenario.monthly_payment_total || 0));
-            const style = loanScenarioStyles[payment] || { color: '#6D28D9', dash: [8, 6], width: 2 };
+            const style = loanScenarioStyles[payment] || { color: '#4B5563', dash: [8, 6], width: 2 };
             const lineData = (scenario.years || []).map(point => ({
                 x: Number(point.year),
                 y: Number(point.balance),
@@ -107,6 +138,7 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             datasets.push({
                 label: `Student Loan Balance ($${payment.toLocaleString()}/mo)`,
                 data: lineData,
+                datasetType: 'loan',
                 borderColor: style.color,
                 borderDash: style.dash,
                 backgroundColor: 'rgba(0, 0, 0, 0)',
@@ -122,6 +154,10 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
 
     const minX = allXValues.length ? Math.min(...allXValues) : new Date().getFullYear();
     const maxX = allXValues.length ? Math.max(...allXValues) : minX + 1;
+    const yearSpan = Math.ceil(maxX) - Math.floor(minX);
+    const yearStep = yearSpan <= 30 ? 1 : (yearSpan <= 60 ? 2 : 5);
+
+    renderSplitLegend(datasets);
 
     // Add phase boundary annotations via vertical dashed segments
     const ctx = canvas.getContext('2d');
@@ -134,8 +170,7 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: {
-                    position: 'top',
-                    labels: { usePointStyle: true, padding: 16, font: { size: 13, weight: '600' } },
+                    display: false,
                 },
                 tooltip: {
                     backgroundColor: 'rgba(45, 24, 16, 0.92)',
@@ -161,6 +196,10 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
                     grid: { color: 'rgba(232, 221, 208, 0.5)' },
                     ticks: {
                         font: { size: 12, weight: '500' },
+                        autoSkip: false,
+                        stepSize: yearStep,
+                        maxRotation: 0,
+                        minRotation: 0,
                         callback: function(value) { return fmtYear(Number(value)); },
                     },
                 },
