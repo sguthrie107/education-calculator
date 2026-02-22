@@ -246,6 +246,14 @@ header p {
     position: relative;
     height: 500px;
     border: 2px solid var(--trim-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.chart-canvas-wrap {
+    flex: 1;
+    min-height: 0;
 }
 
 .chart-container canvas {
@@ -258,8 +266,8 @@ header p {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-    margin: 0 auto 1rem auto;
-    max-width: 1400px;
+    margin: 0;
+    max-width: 100%;
 }
 
 .legend-card {
