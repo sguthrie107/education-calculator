@@ -181,6 +181,10 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
                     padding: 12,
                     cornerRadius: 10,
                     callbacks: {
+                        title: function(context) {
+                            if (!context || context.length === 0) return '';
+                            return 'Year ' + fmtYear(Number(context[0].parsed.x));
+                        },
                         label: function(context) {
                             if (context.parsed.y == null) return null;
                             return context.dataset.label + ': ' + fmt(context.parsed.y) + ' @ ' + fmtYear(context.parsed.x);
