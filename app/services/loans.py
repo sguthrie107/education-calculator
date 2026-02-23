@@ -64,11 +64,11 @@ def build_household_student_loan_projection(base_year: int = 2026) -> dict:
     """Build family student loan payoff scenarios.
 
     Assumptions:
-    - Starting principal: $70,000
+    - Starting principal: $60,000
     - APR: 5%
     - Total monthly payment scenarios: $1,500, $2,000, $2,500
     """
-    principal = 70000.0
+    principal = 60000.0
     annual_interest_rate = 0.05
     assumed_total_monthly_payment = 2000.0
     scenario_payment_levels = [1500.0, 2000.0, 2500.0]
