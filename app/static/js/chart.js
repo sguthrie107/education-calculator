@@ -167,12 +167,14 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
+            interaction: { mode: 'x', intersect: false },
             plugins: {
                 legend: {
                     display: false,
                 },
                 tooltip: {
+                    mode: 'x',
+                    intersect: false,
                     backgroundColor: 'rgba(45, 24, 16, 0.92)',
                     titleColor: '#FFF8F0',
                     bodyColor: '#F0D9C6',
