@@ -1,4 +1,5 @@
 """Database configuration and session management."""
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
@@ -7,6 +8,8 @@ from pathlib import Path
 
 from .config import DATABASE_URL
 from .models import Base, Child
+
+log = logging.getLogger(__name__)
 
 # Create engine
 engine = create_engine(
@@ -37,9 +40,9 @@ def seed_default_children():
                 db.add(new_child)
 
         db.commit()
-    except Exception as e:
+    except Exception:
         db.rollback()
-        print(f"Error seeding children: {e}")
+        log.exception("Error seeding children")
     finally:
         db.close()
 

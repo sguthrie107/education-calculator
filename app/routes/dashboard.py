@@ -1,14 +1,17 @@
 """Dashboard routes."""
+import logging
+
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
-import json
 
 from ..database import get_db
 from ..models import Child
 from ..services.comparison import get_all_children_comparison
+
+log = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -26,10 +29,8 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     if child_names:
         try:
             initial_data = get_all_children_comparison(db)
-        except Exception as e:
-            print(f"Error fetching initial data: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
+            log.exception("Failed to load initial education data")
 
     return templates.TemplateResponse(
         "dashboard.html",
