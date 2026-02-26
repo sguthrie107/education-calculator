@@ -627,9 +627,11 @@ select:focus {
 }
 
 .child-delta-header {
+    position: relative;
     padding: 0.95rem 1rem;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+    padding-right: 3rem;
 }
 
 .child-delta-block h3 {
@@ -648,6 +650,35 @@ select:focus {
 .child-delta-header p {
     font-size: 0.8rem;
     color: var(--text-muted);
+}
+
+.child-toggle-btn {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: var(--background-light);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.child-toggle-btn:hover {
+    background: var(--surface-hover);
+    color: var(--primary-color);
+    border-color: var(--trim-color);
+}
+
+.child-delta-block.collapsed .child-delta-content {
+    display: none;
 }
 
 .table-wrap {

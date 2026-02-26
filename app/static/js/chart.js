@@ -3,6 +3,7 @@
 let chartInstance = null;
 let allChildrenData = [];
 let householdLoanData = null;
+const collapsedChildSections = new Set();
 
 if (window.Chart) {
     Chart.defaults.font.family = 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -426,11 +427,24 @@ function renderChildDeltaBlock(child) {
         return 'phase-3';
     };
 
-    let html = `<div class="child-delta-block">
+    const childKey = `${child.child_name}-${child.birth_year}`;
+    const blockId = 'child-delta-' + childKey.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const isCollapsed = collapsedChildSections.has(childKey);
+    const arrow = isCollapsed ? '▸' : '▾';
+
+    let html = `<div class="child-delta-block ${isCollapsed ? 'collapsed' : ''}" id="${blockId}" data-child-key="${childKey}">
         <div class="child-delta-header">
             <h3>${child.child_name} <span>(Born ${child.birth_year})</span></h3>
             <p>Initial: ${fmt(child.initial_investment_nominal || 2500)} nominal (${fmt(child.initial_investment_2026 || 2500)} in 2026 dollars)</p>
+            <button
+                type="button"
+                class="child-toggle-btn"
+                onclick="toggleChildDeltaBlock('${blockId}')"
+                aria-expanded="${isCollapsed ? 'false' : 'true'}"
+                title="${isCollapsed ? 'Expand section' : 'Collapse section'}"
+            >${arrow}</button>
         </div>
+        <div class="child-delta-content">
         <div class="table-wrap">
         <table>
             <thead>
@@ -482,8 +496,31 @@ function renderChildDeltaBlock(child) {
         </tr>`;
     });
 
-    html += '</tbody></table></div></div>';
+    html += '</tbody></table></div></div></div>';
     return html;
+}
+
+function toggleChildDeltaBlock(blockId) {
+    const block = document.getElementById(blockId);
+    if (!block) return;
+
+    const childKey = block.dataset.childKey;
+    const btn = block.querySelector('.child-toggle-btn');
+    const nowCollapsed = !block.classList.contains('collapsed');
+
+    block.classList.toggle('collapsed', nowCollapsed);
+
+    if (nowCollapsed) {
+        collapsedChildSections.add(childKey);
+    } else {
+        collapsedChildSections.delete(childKey);
+    }
+
+    if (btn) {
+        btn.textContent = nowCollapsed ? '▸' : '▾';
+        btn.setAttribute('aria-expanded', nowCollapsed ? 'false' : 'true');
+        btn.setAttribute('title', nowCollapsed ? 'Expand section' : 'Collapse section');
+    }
 }
 
 // ── Balance CRUD ───────────────────────────────────────────────
@@ -579,6 +616,7 @@ window.onChildSelectionChange = onChildSelectionChange;
 window.renderPhaseCards = renderPhaseCards;
 window.renderSnapshotCards = renderSnapshotCards;
 window.renderAllDeltaTables = renderAllDeltaTables;
+window.toggleChildDeltaBlock = toggleChildDeltaBlock;
 window.showBalanceForm = showBalanceForm;
 window.hideBalanceForm = hideBalanceForm;
 window.submitBalance = submitBalance;
