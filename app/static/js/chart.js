@@ -169,6 +169,16 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'x', intersect: false },
+            layout: {
+                padding: {
+                    right: 10,
+                },
+            },
+            datasets: {
+                line: {
+                    clip: 10,
+                },
+            },
             plugins: {
                 legend: {
                     display: false,
@@ -376,7 +386,7 @@ function renderSnapshotCards(childrenData, householdLoanProjection = null) {
             <div class="snapshot-grid">
                 <div class="snapshot-item">
                     <span class="snapshot-label">Starting Balance</span>
-                    <span class="snapshot-value">${fmt(householdLoanProjection.principal || 70000)}</span>
+                    <span class="snapshot-value">${fmt(householdLoanProjection.principal || 60000)}</span>
                 </div>
                 <div class="snapshot-item">
                     <span class="snapshot-label">Interest Rate</span>
