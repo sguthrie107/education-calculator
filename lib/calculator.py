@@ -97,6 +97,7 @@ def project_529_account(child_config: dict, base_year: int = 2026) -> list[dict]
         annual_inflation_rate=inflation_rate,
     )
     starting_monthly_contribution = child_config.get("monthly_contribution", 200.0)
+    annual_contribution_growth_rate = child_config.get("annual_contribution_growth_rate", 0.03)
     phases = child_config["phases"]
 
     rows = []
@@ -105,7 +106,7 @@ def project_529_account(child_config: dict, base_year: int = 2026) -> list[dict]
     # Project from age 0 (birth_year) through age 20 (birth_year + 20)
     for age in range(0, 21):
         year = birth_year + age
-        monthly_contribution = starting_monthly_contribution + (age * 5.0)
+        monthly_contribution = starting_monthly_contribution * ((1 + annual_contribution_growth_rate) ** age)
         phase_key = get_phase_for_age(age)
         phase_info = phases[phase_key]
         allocation = phase_info["allocation"]
