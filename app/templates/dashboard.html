@@ -17,6 +17,19 @@
             {% endif %}
         </select>
     </div>
+    <div class="control-group">
+        <label class="toggle-inline" for="deductionToggle">
+            <input type="checkbox" id="deductionToggle" onchange="onDeductionToggleChange()">
+            <span>Standard Deductions</span>
+        </label>
+    </div>
+    <div class="control-group">
+        <label for="deductionPathSelect">College Path:</label>
+        <select id="deductionPathSelect" onchange="onDeductionPathChange()" disabled>
+            <option value="direct_4yr" selected>Direct 4-Year University</option>
+            <option value="blended_2plus2">2-Year Community + 2-Year University</option>
+        </select>
+    </div>
 </div>
 
 <div class="chart-container">
@@ -45,6 +58,11 @@
         <h2>Account Snapshot</h2>
         <div id="snapshotCards" class="snapshot-cards"></div>
     </div>
+</div>
+
+<div id="fundingBreakdownSection" class="snapshot-section">
+    <h2>Education Funding Breakdown</h2>
+    <div id="fundingBreakdownCards" class="snapshot-cards"></div>
 </div>
 
 <div id="deltaTable" class="delta-section">
@@ -149,6 +167,7 @@
             renderAllChildrenChart(initialData.children, initialData.household_loan || null);
             renderPhaseCards(initialData.children);
             renderSnapshotCards(initialData.children, initialData.household_loan || null);
+            renderFundingBreakdown(initialData.children);
             renderAllDeltaTables(initialData.children);
         } catch (error) {
             document.getElementById('deltaContent').innerHTML =

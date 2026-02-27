@@ -4,6 +4,8 @@ let chartInstance = null;
 let allChildrenData = [];
 let householdLoanData = null;
 const collapsedChildSections = new Set();
+let deductionModeEnabled = false;
+let deductionPathKey = 'direct_4yr';
 
 if (window.Chart) {
     Chart.defaults.font.family = 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -113,6 +115,33 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
                 showLine: false,
                 spanGaps: false,
             });
+        }
+
+        if (deductionModeEnabled) {
+            const scenarios = child.withdrawal_scenarios?.scenarios || {};
+            const selectedScenario = scenarios[deductionPathKey];
+            if (selectedScenario && Array.isArray(selectedScenario.balance_timeline)) {
+                const withdrawalPoints = selectedScenario.balance_timeline.map((point) => ({
+                    x: Number(point.year),
+                    y: Number(point.balance),
+                }));
+                withdrawalPoints.forEach(point => allXValues.push(point.x));
+
+                datasets.push({
+                    label: child.child_name + ' (After Withdrawals)',
+                    data: withdrawalPoints,
+                    datasetType: 'education',
+                    borderColor: color.actual,
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 2.6,
+                    borderDash: [7, 5],
+                    fill: false,
+                    tension: 0.15,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    spanGaps: false,
+                });
+            }
         }
     });
 
@@ -250,6 +279,7 @@ function onChildSelectionChange() {
                 renderAllChildrenChart(data.children, householdLoanData);
                 renderPhaseCards(data.children);
                 renderSnapshotCards(data.children, householdLoanData);
+                renderFundingBreakdown(data.children);
                 renderAllDeltaTables(data.children);
             });
     } else {
@@ -260,9 +290,66 @@ function onChildSelectionChange() {
                 renderSingleChildChart(data, householdLoanData);
                 renderPhaseCards([data]);
                 renderSnapshotCards([data], householdLoanData);
+                renderFundingBreakdown([data]);
                 renderAllDeltaTables([data]);
             });
     }
+}
+
+function onDeductionToggleChange() {
+    const toggle = document.getElementById('deductionToggle');
+    const pathSelect = document.getElementById('deductionPathSelect');
+    deductionModeEnabled = Boolean(toggle?.checked);
+    if (pathSelect) pathSelect.disabled = !deductionModeEnabled;
+    renderAllChildrenChart(allChildrenData, householdLoanData);
+    renderFundingBreakdown(allChildrenData);
+}
+
+function onDeductionPathChange() {
+    const pathSelect = document.getElementById('deductionPathSelect');
+    deductionPathKey = pathSelect?.value || 'direct_4yr';
+    renderAllChildrenChart(allChildrenData, householdLoanData);
+    renderFundingBreakdown(allChildrenData);
+}
+
+function renderFundingBreakdown(childrenData) {
+    const container = document.getElementById('fundingBreakdownCards');
+    if (!container) return;
+
+    if (!childrenData || !childrenData.length) {
+        container.innerHTML = '<p class="loading">No funding breakdown available</p>';
+        return;
+    }
+
+    const percent = (value) => `${Number(value || 0).toFixed(1)}%`;
+
+    const cardHtml = childrenData.map((child) => {
+        const scenarios = child.withdrawal_scenarios?.scenarios || {};
+        const direct = scenarios.direct_4yr?.summary;
+        const blended = scenarios.blended_2plus2?.summary;
+
+        const scenarioRow = (title, summary) => {
+            if (!summary) {
+                return `<div class="snapshot-item"><span class="snapshot-label">${title}</span><span class="snapshot-value">N/A</span></div>`;
+            }
+            return `
+                <div class="snapshot-item"><span class="snapshot-label">${title} Paid by 529</span><span class="snapshot-value">${fmt(summary.paid_by_529 || 0)} (${percent(summary.percent_paid_by_529)})</span></div>
+                <div class="snapshot-item"><span class="snapshot-label">${title} Remaining</span><span class="snapshot-value">${fmt(summary.remaining_cost || 0)}</span></div>
+            `;
+        };
+
+        return `
+            <div class="snapshot-card snapshot-card-funding">
+                <h3>${child.child_name}</h3>
+                <div class="snapshot-grid">
+                    ${scenarioRow('Direct 4-Year', direct)}
+                    ${scenarioRow('2+2 Blended', blended)}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = cardHtml;
 }
 
 // ── Phase allocation cards ─────────────────────────────────────
@@ -625,8 +712,11 @@ window.renderSingleChildChart = renderSingleChildChart;
 window.onChildSelectionChange = onChildSelectionChange;
 window.renderPhaseCards = renderPhaseCards;
 window.renderSnapshotCards = renderSnapshotCards;
+window.renderFundingBreakdown = renderFundingBreakdown;
 window.renderAllDeltaTables = renderAllDeltaTables;
 window.toggleChildDeltaBlock = toggleChildDeltaBlock;
+window.onDeductionToggleChange = onDeductionToggleChange;
+window.onDeductionPathChange = onDeductionPathChange;
 window.showBalanceForm = showBalanceForm;
 window.hideBalanceForm = hideBalanceForm;
 window.submitBalance = submitBalance;

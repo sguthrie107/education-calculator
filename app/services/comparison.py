@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from ..models import Child, Account529, ActualBalance
 from .projection import get_child_projection, get_all_projections
 from .loans import build_household_student_loan_projection
+from .education_withdrawals import build_child_withdrawal_scenarios
+from lib.calculator import get_child_config
 
 
 def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> dict:
@@ -19,6 +21,13 @@ def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> 
         }
     """
     projection = get_child_projection(child_name, base_year=base_year)
+    child_config = get_child_config(child_name)
+    withdrawal_scenarios = build_child_withdrawal_scenarios(
+        child_config=child_config,
+        projected_rows=projection.get("projected", []),
+        base_year=base_year,
+        covered_ratio=0.9,
+    )
 
     # Fetch actual balances from DB
     actual_by_year = {}
@@ -76,6 +85,7 @@ def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> 
         "initial_investment_2026": projection.get("initial_investment_2026", 2500.0),
         "initial_investment_nominal": projection.get("initial_investment_nominal", 2500.0),
         "projected": projection["projected"],
+        "withdrawal_scenarios": withdrawal_scenarios,
         "actual": actual_list,
         "deltas": deltas,
     }

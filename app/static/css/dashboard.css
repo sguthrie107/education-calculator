@@ -161,6 +161,59 @@ body > * {
     padding: 0 24px;
 }
 
+.dashboard-controls {
+    max-width: 1400px;
+    margin: 0 auto 1rem auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1rem;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.55rem 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.control-group label {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.control-group select {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 0.35rem 0.5rem;
+}
+
+.control-group select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.toggle-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+}
+
+.toggle-inline input[type="checkbox"] {
+    accent-color: var(--primary-color);
+}
+
 /* ── Header ─────────────────────────────────────────────────── */
 header {
     position: relative;
@@ -249,6 +302,10 @@ header p {
     display: flex;
     flex-direction: column;
     gap: 0.9rem;
+}
+
+.snapshot-card-funding {
+    border: 1px solid rgba(142, 58, 98, 0.22);
 }
 
 .chart-canvas-wrap {
