@@ -1,18 +1,225 @@
-# 529 Education Calculator
+# Education Calculator
 
-Standalone 529 education savings projection dashboard. Tracks account growth from child age 0 to 20, supports up to 3 children with 3-year offsets, and provides actual-vs-projected performance comparison.
+FastAPI + Jinja2 + Chart.js dashboard for long-horizon 529 planning and student-loan overlays, with scenario modeling for college withdrawals.
 
-Built to mirror the architecture, dashboard behavior, and execution style of the sibling `retirement-calculator` project.
+This README is intentionally detailed for engineers who are advanced in Python but beginner-to-intermediate in HTML/CSS.
 
-## Quick Start
+---
+
+## 1) What this app does
+
+- Projects each child’s 529 balance from age 0 through age 20.
+- Stores yearly actual 529 balances and computes projected-vs-actual deltas.
+- Draws combined visualization of:
+  - 529 projected/actual series
+  - household student-loan payoff scenarios
+- Supports education withdrawal “standard deduction” scenarios:
+  - University (4-year)
+  - Community College + University (2+2)
+
+---
+
+## 2) Stack and runtime model
+
+- Backend: FastAPI + SQLAlchemy
+- Server-rendered views: Jinja2
+- Front-end rendering: Chart.js + vanilla JavaScript
+- Local DB default: SQLite (`education.db`)
+- Production DB support: PostgreSQL via `DATABASE_URL`
+
+Dependencies are listed in [requirements.txt](requirements.txt).
+
+---
+
+## 3) Project architecture and boundaries
+
+Main entrypoints:
+
+- [app/main.py](app/main.py)
+- [Procfile](Procfile)
+- [start_web.ps1](start_web.ps1)
+
+Core modules:
+
+- Boot/config
+  - [app/main.py](app/main.py): app creation, middleware, route registration
+  - [app/config.py](app/config.py): env config, 529 defaults, DB URL normalization
+- Persistence
+  - [app/models.py](app/models.py): `Child`, `Account529`, `ActualBalance`
+  - [app/database.py](app/database.py): engine/session setup, schema init, child seeding
+  - [app/schemas.py](app/schemas.py): request/response DTOs
+- API and page routes
+  - [app/routes/dashboard.py](app/routes/dashboard.py): `GET /` and initial hydration payload
+  - [app/routes/projections.py](app/routes/projections.py): comparison APIs
+  - [app/routes/balances.py](app/routes/balances.py): actual-balance CRUD
+- Domain logic
+  - [app/services/projection.py](app/services/projection.py): wraps pure calculator output
+  - [app/services/comparison.py](app/services/comparison.py): merges projected, actual, deltas, and household loan data
+  - [app/services/education_withdrawals.py](app/services/education_withdrawals.py): 529 withdrawal path scenarios
+  - [app/services/loans.py](app/services/loans.py): household student-loan amortization scenarios
+  - [lib/calculator.py](lib/calculator.py): pure numerical engine
+- Front-end
+  - [app/templates/base.html](app/templates/base.html)
+  - [app/templates/dashboard.html](app/templates/dashboard.html)
+  - [app/static/css/dashboard.css](app/static/css/dashboard.css)
+  - [app/static/js/chart.js](app/static/js/chart.js)
+
+---
+
+## 4) Python domain flow
+
+### 4.1 Projection pipeline
+
+1. Route requests child comparison.
+2. [app/services/projection.py](app/services/projection.py) invokes `lib/calculator.py`.
+3. Output is normalized into API-facing yearly points:
+   - `year`, `age`, `balance`, `phase`, `phase_key`, `contributions_ytd`
+
+### 4.2 Comparison assembly
+
+[app/services/comparison.py](app/services/comparison.py):
+
+- pulls projected rows,
+- fetches DB actual rows,
+- computes yearly deltas,
+- attaches withdrawal scenarios from [app/services/education_withdrawals.py](app/services/education_withdrawals.py),
+- attaches household loan projection from [app/services/loans.py](app/services/loans.py) when requesting all children.
+
+### 4.3 Withdrawal scenario engine
+
+[app/services/education_withdrawals.py](app/services/education_withdrawals.py):
+
+- Uses NC cost assumptions (tuition + room/board) with inflation uplift per year.
+- Simulates two path definitions (`direct_4yr`, `blended_2plus2`).
+- Applies 529 coverage target (`covered_ratio`, currently 0.9).
+- Produces:
+  - annual cost details
+  - paid-vs-remaining split
+  - balance timeline
+  - summary rollups
+
+### 4.4 Loan projection engine
+
+[app/services/loans.py](app/services/loans.py):
+
+- Uses monthly amortization loop with APR and payment scenarios.
+- Emits yearly and fractional-year snapshots until payoff.
+- Returns baseline + alternate payment scenarios for chart overlays.
+
+---
+
+## 5) HTML/CSS walkthrough (backend-friendly)
+
+### 5.1 Template composition
+
+- [app/templates/base.html](app/templates/base.html) is the shared skeleton.
+- [app/templates/dashboard.html](app/templates/dashboard.html) extends it and defines:
+  - control bar
+  - chart canvas
+  - phase/snapshot/funding sections
+  - delta table
+  - create/edit modals
+
+In Python terms: `base.html` is your reusable abstract base view, while `dashboard.html` is the concrete specialization.
+
+### 5.2 Why IDs matter here
+
+This front-end is vanilla JS, so IDs are the contract surface:
+
+- `#childSelect`
+- `#deductionToggle`
+- `#deductionPathSelect`
+- `#educationChart`
+- `#deltaContent`
+
+JS selectors and event handlers in [app/static/js/chart.js](app/static/js/chart.js) depend directly on these IDs.
+
+### 5.3 CSS system design
+
+In [app/static/css/dashboard.css](app/static/css/dashboard.css):
+
+- `:root` holds design tokens (colors, shadows, gradients, borders).
+- Components are class-driven (`.control-group`, `.chart-container`, `.modal`, `.btn-primary`).
+- Layout uses modern flex/grid patterns with responsive breakpoints.
+- Typography is served locally through Montserrat `@font-face` declarations.
+
+If you are new to CSS: read it as “rules bound to selectors.” A selector targets elements; declarations modify rendering behavior in browser layout/paint phases.
+
+---
+
+## 6) Front-end chart orchestration
+
+The JS orchestrator is [app/static/js/chart.js](app/static/js/chart.js).
+
+Key responsibilities:
+
+- hold current state (`allChildrenData`, deduction toggles, selected path)
+- normalize chart datasets (projected, actual, loans)
+- keep a split legend for account series vs loan series
+- render single-child or all-child views
+- rebuild chart and cards when toggles change
+- submit CRUD calls for actual balances and refresh UI
+
+Chart rendering approach:
+
+- x-axis uses linear years
+- each series maps to `{x, y}` points
+- loan scenarios use dashed lines and fixed palette
+- tooltip callbacks enrich displayed context
+
+---
+
+## 7) API endpoints
+
+From [app/routes/projections.py](app/routes/projections.py) and [app/routes/balances.py](app/routes/balances.py):
+
+- `GET /api/comparison/{child_name}`
+- `GET /api/comparison-all`
+- `POST /api/balances/{child_name}`
+- `GET /api/balances/{child_name}`
+- `PUT /api/balances/{balance_id}`
+- `DELETE /api/balances/{balance_id}`
+
+Page route:
+
+- `GET /`
+
+Health route:
+
+- `GET /health`
+
+---
+
+## 8) Security model
+
+Shared pattern with retirement app:
+
+- [app/auth.py](app/auth.py)
+  - HTTP Basic auth
+  - local-host bypass for development
+  - guest read-only semantics
+  - editor write permissions
+- [app/security_headers.py](app/security_headers.py)
+  - CSP and browser hardening headers
+
+Auth env vars:
+
+- `AUTH_STEVEN_PASSWORD`
+- `AUTH_ALYSSA_PASSWORD`
+- `AUTH_GUEST_PASSWORD`
+
+---
+
+## 9) Local development
+
+Quick start:
 
 ```powershell
 cd education-calculator
 .\start_web.ps1
-# Opens at http://localhost:8001
 ```
 
-Or manually:
+Manual:
 
 ```powershell
 python -m venv venv
@@ -21,130 +228,49 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
-## Architecture
+The app runs on `8001` to avoid collision with retirement app default `8000`.
 
-```
-education-calculator/
-├── app/
-│   ├── main.py              # FastAPI app factory
-│   ├── config.py            # Env config & 529 defaults
-│   ├── database.py          # SQLAlchemy engine + session + seeding
-│   ├── models.py            # ORM: Child, Account529, ActualBalance
-│   ├── schemas.py           # Pydantic request/response models
-│   ├── routes/
-│   │   ├── dashboard.py     # GET / — serves Jinja2 dashboard
-│   │   ├── projections.py   # GET /api/comparison/{child}, /api/comparison-all
-│   │   └── balances.py      # CRUD /api/balances/{child}
-│   ├── services/
-│   │   ├── projection.py    # Wraps lib/calculator for web layer
-│   │   └── comparison.py    # Merges projected + actual + deltas
-│   ├── static/
-│   │   ├── css/dashboard.css
-│   │   ├── js/chart.js
-│   │   ├── fonts/
-│   │   └── favicon.ico
-│   └── templates/
-│       ├── base.html
-│       └── dashboard.html
-├── lib/
-│   └── calculator.py        # Pure financial engine — no DB/HTTP/UI
-├── data/
-│   └── children.json        # Child configs (birth years, allocations)
-├── requirements.txt
-├── pyproject.toml
-└── start_web.ps1
-```
+---
 
-### Layer Separation
+## 10) Railway hosting (how deployment works)
 
-| Layer | Purpose | Files |
-|-------|---------|-------|
-| **Calculation Engine** | Pure math: phase allocation, blended returns, monthly compounding | `lib/calculator.py` |
-| **Data Storage** | SQLAlchemy ORM + SQLite, JSON seed data | `app/models.py`, `app/database.py`, `data/children.json` |
-| **Service Layer** | Bridges engine → web | `app/services/projection.py`, `app/services/comparison.py` |
-| **UI / Dashboard** | FastAPI + Jinja2 + Chart.js | `app/routes/`, `app/templates/`, `app/static/` |
+### 10.1 Deployment contract already present
 
-## Investment Phases
+- [Procfile](Procfile) starts the service on Railway-provided port:
+  - `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- [app/config.py](app/config.py) normalizes `DATABASE_URL` from Railway format.
+- PostgreSQL driver is included in [requirements.txt](requirements.txt).
 
-Each 529 account uses age-based allocation switching:
+### 10.2 Typical Railway setup
 
-| Phase | Ages | US Stock | Intl Stock | US Bond | Blended Return |
-|-------|------|----------|------------|---------|----------------|
-| Aggressive Growth | 0–12 | 70% VTSAX | 30% VTIAX | — | ~9.4% |
-| Moderate Growth | 13–17 | 60% VTSAX | 20% VTIAX | 20% VBTLX | ~8.4% |
-| Conservative | 18–20 | 40% VTSAX | 20% VTIAX | 40% VBTLX | ~7.2% |
+1. Create Railway project from this repo.
+2. Attach a PostgreSQL service.
+3. Set environment variables:
+   - `DATABASE_URL` (usually auto-injected)
+   - `AUTH_STEVEN_PASSWORD`
+   - `AUTH_ALYSSA_PASSWORD`
+   - `AUTH_GUEST_PASSWORD`
+   - optional: `DEBUG`, `ALLOWED_ORIGINS`
+4. Deploy.
 
-## Simulation Loop
+### 10.3 Startup behavior on Railway
 
-For each child, for each year (age 0 → 20):
+- FastAPI app starts from `app.main:app`.
+- Lifespan hook triggers `init_db()` from [app/database.py](app/database.py).
+- Tables are created if absent.
+- Seed children from `data/children.json` if not already present.
 
-1. Determine phase by age → select allocation
-2. Compute blended annual return from weighted fund returns
-3. Convert to monthly rate: `(1 + annual)^(1/12) - 1`
-4. For each of 12 months: `balance = balance × (1 + monthly_rate) + $200`
-5. Record yearly snapshot: beginning balance, contributions, growth, ending balance
+### 10.4 Practical production notes
 
-Initial investment of $2,500 is deposited at age 0 before month 1.
+- Keep auth passwords non-empty.
+- Prefer Postgres in Railway over SQLite for persistent multi-instance behavior.
+- If schema complexity grows, move from `create_all` startup to explicit migrations.
 
-## Children Configuration
+---
 
-Defined in `data/children.json`:
+## 11) Suggested engineering improvements
 
-- **Child 1**: Born 2026 (projects 2026–2046)
-- **Child 2**: Born 2029 (projects 2029–2049)  
-- **Child 3**: Born 2032 (projects 2032–2052)
-
-Each child: $2,500 initial investment + $200/month contributions.
-
-## Dashboard Features
-
-- **Multi-child chart**: All 3 children plotted with distinct colors
-- **Single child view**: Dropdown to isolate one child
-- **Phase allocation cards**: Visual breakdown of each investment phase
-- **Performance comparison table**: Year-by-year projected vs actual with delta %
-- **Actual balance entry**: Modal form to record yearly snapshots
-- **Edit/delete**: Inline actions on recorded balances
-
-## Design
-
-- **Primary**: Burnt Red (#8B2500)
-- **Background**: Off White (#FAF8F5)
-- **Accents**: Gold trim (#C8A44D)
-- **Font**: Montserrat
-- **Favicon**: Shared husky image from retirement-calculator
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/` | Dashboard HTML |
-| GET | `/api/comparison/{child_name}` | Single child projection + actuals |
-| GET | `/api/comparison-all` | All children projections |
-| POST | `/api/balances/{child_name}` | Create actual balance |
-| PUT | `/api/balances/{balance_id}` | Update balance |
-| DELETE | `/api/balances/{balance_id}` | Delete balance |
-
-## Example Projection Output (Child 1, Age 20)
-
-```json
-{
-  "child_name": "Child 1",
-  "birth_year": 2026,
-  "projected": [
-    {"year": 2026, "age": 0, "balance": 5236.72, "phase": "Aggressive Growth (Age 0-12)", "contributions_ytd": 4900.00},
-    {"year": 2038, "age": 12, "balance": 66997.20, "phase": "Aggressive Growth (Age 0-12)", "contributions_ytd": 33700.00},
-    {"year": 2039, "age": 13, "balance": 75116.02, "phase": "Moderate Growth (Age 13-17)", "contributions_ytd": 36100.00},
-    {"year": 2043, "age": 17, "balance": 115008.44, "phase": "Moderate Growth (Age 13-17)", "contributions_ytd": 45700.00},
-    {"year": 2044, "age": 18, "balance": 125767.25, "phase": "Conservative (Age 18+)", "contributions_ytd": 48100.00},
-    {"year": 2046, "age": 20, "balance": 149664.55, "phase": "Conservative (Age 18+)", "contributions_ytd": 52900.00}
-  ]
-}
-```
-
-## Future Integration
-
-The project is structured for embedding into a larger family dashboard website:
-- Clean service abstraction (no UI in the engine)
-- Standalone SQLite database (`education.db`)
-- Runs on port 8001 to avoid conflicts with retirement-calculator (port 8000)
-- Router-based routes ready to mount under a sub-path
+- Add migration tooling (Alembic).
+- Add API contract tests around comparison and scenario payloads.
+- Consider extracting repeated auth/header middleware into a shared package used by both calculators.
+- Add a typed front-end boundary (TypeScript or JSON schema validation) for JS payload safety.
