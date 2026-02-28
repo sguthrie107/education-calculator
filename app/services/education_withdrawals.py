@@ -10,22 +10,24 @@ BASE_YEAR = 2026
 
 NC_COST_ASSUMPTIONS_2026 = {
     "university": {
-        "tuition": 7600.0,
-        "room_board": 12300.0,
+        "school": "UNC Chapel Hill",
+        "tuition": 9100.0,
+        "room_board": 14300.0,
     },
     "community_college": {
-        "tuition": 2900.0,
-        "room_board": 9800.0,
+        "school": "Central Piedmont Community College",
+        "tuition": 2800.0,
+        "room_board": 8200.0,
     },
 }
 
 SCENARIO_DEFINITIONS = {
     "direct_4yr": {
-        "label": "Direct 4-Year University",
+        "label": "UNC Chapel Hill (4-Year)",
         "path": ["university", "university", "university", "university"],
     },
     "blended_2plus2": {
-        "label": "2-Year Community + 2-Year University",
+        "label": "CPCC (2-Year) + UNC Chapel Hill (2-Year)",
         "path": ["community_college", "community_college", "university", "university"],
     },
 }

@@ -74,10 +74,31 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
 
     childrenData.forEach((child, idx) => {
         const color = childColors[idx % childColors.length];
-        const projectedPoints = (child.projected || []).map(p => ({
+        const projectedRows = child.projected || [];
+        let projectedPoints = projectedRows.map(p => ({
             x: Number(p.year),
             y: Number(p.balance),
         }));
+
+        if (deductionModeEnabled) {
+            const scenarios = child.withdrawal_scenarios?.scenarios || {};
+            const selectedScenario = scenarios[deductionPathKey];
+            const withdrawalTimeline = selectedScenario?.balance_timeline;
+
+            if (Array.isArray(withdrawalTimeline) && withdrawalTimeline.length > 0) {
+                const collegeStartYear = Number(selectedScenario.college_start_year);
+                const preCollegePoints = projectedRows
+                    .filter(p => Number(p.year) < collegeStartYear)
+                    .map(p => ({ x: Number(p.year), y: Number(p.balance) }));
+                const withdrawalPoints = withdrawalTimeline.map(point => ({
+                    x: Number(point.year),
+                    y: Number(point.balance),
+                }));
+
+                projectedPoints = [...preCollegePoints, ...withdrawalPoints];
+            }
+        }
+
         projectedPoints.forEach(point => allXValues.push(point.x));
 
         // Projected line
@@ -115,33 +136,6 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
                 showLine: false,
                 spanGaps: false,
             });
-        }
-
-        if (deductionModeEnabled) {
-            const scenarios = child.withdrawal_scenarios?.scenarios || {};
-            const selectedScenario = scenarios[deductionPathKey];
-            if (selectedScenario && Array.isArray(selectedScenario.balance_timeline)) {
-                const withdrawalPoints = selectedScenario.balance_timeline.map((point) => ({
-                    x: Number(point.year),
-                    y: Number(point.balance),
-                }));
-                withdrawalPoints.forEach(point => allXValues.push(point.x));
-
-                datasets.push({
-                    label: child.child_name + ' (After Withdrawals)',
-                    data: withdrawalPoints,
-                    datasetType: 'education',
-                    borderColor: color.actual,
-                    backgroundColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 2.6,
-                    borderDash: [7, 5],
-                    fill: false,
-                    tension: 0.15,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    spanGaps: false,
-                });
-            }
         }
     });
 
@@ -342,8 +336,8 @@ function renderFundingBreakdown(childrenData) {
             <div class="snapshot-card snapshot-card-funding">
                 <h3>${child.child_name}</h3>
                 <div class="snapshot-grid">
-                    ${scenarioRow('Direct 4-Year', direct)}
-                    ${scenarioRow('2+2 Blended', blended)}
+                    ${scenarioRow('UNC Chapel Hill (4-Year)', direct)}
+                    ${scenarioRow('CPCC + UNC Chapel Hill (2+2)', blended)}
                 </div>
             </div>
         `;
