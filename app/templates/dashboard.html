@@ -17,14 +17,13 @@
             {% endif %}
         </select>
     </div>
-    <div class="control-group">
+    <div class="control-group deduction-path-group">
         <label class="toggle-inline" for="deductionToggle">
             <input type="checkbox" id="deductionToggle" onchange="onDeductionToggleChange()">
             <span>Standard Deductions</span>
         </label>
-    </div>
-    <div class="control-group">
-        <label for="deductionPathSelect">College Path:</label>
+        <span class="control-divider" aria-hidden="true"></span>
+        <label class="control-path-label" for="deductionPathSelect">College Path:</label>
         <select id="deductionPathSelect" onchange="onDeductionPathChange()" disabled>
             <option value="direct_4yr" selected>University (4-Year)</option>
             <option value="blended_2plus2">Community College + University</option>
