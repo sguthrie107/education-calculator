@@ -23,11 +23,11 @@ NC_COST_ASSUMPTIONS_2026 = {
 
 SCENARIO_DEFINITIONS = {
     "direct_4yr": {
-        "label": "UNC Chapel Hill (4-Year)",
+        "label": "University (4-Year)",
         "path": ["university", "university", "university", "university"],
     },
     "blended_2plus2": {
-        "label": "CPCC (2-Year) + UNC Chapel Hill (2-Year)",
+        "label": "Community College + University",
         "path": ["community_college", "community_college", "university", "university"],
     },
 }

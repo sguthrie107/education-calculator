@@ -336,8 +336,8 @@ function renderFundingBreakdown(childrenData) {
             <div class="snapshot-card snapshot-card-funding">
                 <h3>${child.child_name}</h3>
                 <div class="snapshot-grid">
-                    ${scenarioRow('UNC Chapel Hill (4-Year)', direct)}
-                    ${scenarioRow('CPCC + UNC Chapel Hill (2+2)', blended)}
+                    ${scenarioRow('University (4-Year)', direct)}
+                    ${scenarioRow('Community College + University', blended)}
                 </div>
             </div>
         `;
