@@ -382,12 +382,12 @@ header p {
 /* ── Dashboard controls ─────────────────────────────────────── */
 .dashboard-controls {
     background: var(--surface);
-    padding: 1.5rem 2rem;
+    padding: 0.85rem 1rem;
     border-radius: 16px;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     display: flex;
-    gap: 2rem;
+    gap: 0.8rem 1rem;
     align-items: center;
     flex-wrap: wrap;
     border: 1px solid var(--border);
@@ -406,11 +406,23 @@ header p {
 }
 
 .control-group label {
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: 0.84rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.dashboard-controls .toggle-inline {
+    margin-bottom: 0;
+}
+
+.dashboard-controls .toggle-inline span {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 select {
