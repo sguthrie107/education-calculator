@@ -163,7 +163,7 @@ body > * {
 
 .dashboard-controls {
     max-width: 1400px;
-    margin: 0 auto 1rem auto;
+    margin: 0 auto 1.5rem auto;
     display: flex;
     flex-wrap: wrap;
     gap: 0.8rem 1rem;
@@ -385,7 +385,7 @@ header p {
     padding: 0.85rem 1rem;
     border-radius: 16px;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
     display: flex;
     gap: 0.8rem 1rem;
     align-items: center;
@@ -514,12 +514,6 @@ select:focus {
 }
 
 /* ── Below-chart layout ─────────────────────────────────────── */
-.below-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
 
 .btn-primary:active {
     transform: translateY(0);
@@ -552,6 +546,7 @@ select:focus {
     border-radius: 16px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
 }
 
 .snapshot-section h2 {
@@ -694,7 +689,7 @@ select:focus {
     padding: 2rem;
     border-radius: 16px;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     border: 1px solid var(--border);
 }
 
