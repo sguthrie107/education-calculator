@@ -17,13 +17,20 @@ if (Test-Path "venv\Scripts\Activate.ps1") {
 }
 
 Write-Host ""
-if (-not $env:HOST) { $env:HOST = "127.0.0.1" }
-if (-not $env:PORT) { $env:PORT = "8001" }
+    $hostAddress = "127.0.0.1"
+    $portNumber = if ($env:PORT) { $env:PORT } else { "8001" }
+    $url = "http://localhost:$portNumber"
 
-Write-Host "Starting web server on http://localhost:$($env:PORT)" -ForegroundColor Green
-Write-Host "Listening on $($env:HOST):$($env:PORT)" -ForegroundColor Cyan
+    Write-Host "Starting web server on $url" -ForegroundColor Green
+Write-Host "Listening on ${hostAddress}:${portNumber}" -ForegroundColor Cyan
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
 
+    try {
+        Start-Process $url | Out-Null
+    } catch {
+        Write-Host "Could not auto-open browser. Open $url manually." -ForegroundColor Yellow
+    }
+
 # Start the server (port 8001 to avoid conflict with retirement-calculator)
-uvicorn app.main:app --reload --host $env:HOST --port $env:PORT
+    uvicorn app.main:app --reload --host $hostAddress --port $portNumber
