@@ -17,9 +17,13 @@ if (Test-Path "venv\Scripts\Activate.ps1") {
 }
 
 Write-Host ""
-Write-Host "Starting web server on http://localhost:8001" -ForegroundColor Green
+if (-not $env:HOST) { $env:HOST = "0.0.0.0" }
+if (-not $env:PORT) { $env:PORT = "8001" }
+
+Write-Host "Starting web server on http://localhost:$($env:PORT)" -ForegroundColor Green
+Write-Host "Listening on $($env:HOST):$($env:PORT)" -ForegroundColor Cyan
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
 
 # Start the server (port 8001 to avoid conflict with retirement-calculator)
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --host $env:HOST --port $env:PORT
