@@ -33,9 +33,9 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             log.exception("Failed to load initial education data")
 
     return templates.TemplateResponse(
+        request,
         "dashboard.html",
         {
-            "request": request,
             "children": child_names,
             "initial_data": initial_data,
         },
