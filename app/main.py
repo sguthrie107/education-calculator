@@ -1,8 +1,11 @@
 """FastAPI application factory."""
+import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 from .database import init_db
 from .routes import dashboard, projections, balances
@@ -16,7 +19,13 @@ STATIC_DIR = BASE_DIR / "app" / "static"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown."""
-    init_db()
+    try:
+        init_db()
+    except Exception:
+        log.exception(
+            "Database initialisation failed — app will start without a seeded DB. "
+            "Check DATABASE_URL and PostgreSQL connectivity."
+        )
     yield
 
 

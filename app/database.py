@@ -1,6 +1,8 @@
 """Database configuration and session management."""
 import logging
+import time
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 import json
@@ -47,10 +49,26 @@ def seed_default_children():
         db.close()
 
 
-def init_db():
-    """Initialize database tables and seed default data."""
-    Base.metadata.create_all(bind=engine)
-    seed_default_children()
+def init_db(retries: int = 5, delay: float = 2.0) -> None:
+    """Initialize database tables and seed default data.
+
+    Retries up to `retries` times with `delay` seconds between attempts so the
+    app survives Railway's PostgreSQL cold-start race condition.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            Base.metadata.create_all(bind=engine)
+            seed_default_children()
+            log.info("Database initialised successfully (attempt %d).", attempt)
+            return
+        except OperationalError as exc:
+            log.warning(
+                "Database not ready (attempt %d/%d): %s", attempt, retries, exc
+            )
+            if attempt < retries:
+                time.sleep(delay)
+            else:
+                raise
 
 
 def get_db() -> Generator[Session, None, None]:
