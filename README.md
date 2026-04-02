@@ -274,3 +274,82 @@ The app runs on `8001` to avoid collision with retirement app default `8000`.
 - Add API contract tests around comparison and scenario payloads.
 - Consider extracting repeated auth/header middleware into a shared package used by both calculators.
 - Add a typed front-end boundary (TypeScript or JSON schema validation) for JS payload safety.
+
+---
+
+## 12) Visual guide: how the education planner works
+
+This section is the “fun but precise” version of the README for someone who wants the whole mental model quickly.
+
+```mermaid
+flowchart LR
+  A[👶 Child config\nbirth year, monthly contribution, inflation] --> B[📚 529 projection engine\nmonthly compounding + phase switching]
+  B --> C[🗓️ Yearly snapshots\nage, phase, balance, contributions]
+  C --> D[🏫 Withdrawal scenarios\n4-year or 2+2 NC paths]
+  C --> E[💾 Actual balance storage\nSQLite or Postgres]
+  C --> F[💳 Student-loan overlays\nhousehold payoff scenarios]
+  D --> G[📊 Dashboard\nfunding gap, balances, charts]
+  E --> G
+  F --> G
+
+  style A fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0f172a
+  style B fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#0f172a
+  style C fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#0f172a
+  style D fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#0f172a
+  style E fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#0f172a
+  style F fill:#fae8ff,stroke:#c026d3,stroke-width:2px,color:#0f172a
+  style G fill:#d1fae5,stroke:#059669,stroke-width:3px,color:#0f172a
+```
+
+### From birth to college in one picture
+
+```mermaid
+timeline
+  title 529 lifecycle modeled by this repo
+  Age 0-12 : Aggressive growth phase
+       : Monthly contributions compound each year
+  Age 13-17 : Allocation becomes more moderate
+        : Annual snapshots keep projected and actual balances aligned
+  Age 18-20 : Conservative phase drives withdrawal-era return assumption
+        : College-cost scenarios begin
+  College path : University (4-Year) or Community College + University
+         : 529 coverage target, remaining gap, and ending balance are summarized
+  Household view : Loan payoff scenarios can be plotted beside the education balances
+```
+
+### Model assumptions at a glance
+
+- The 529 engine uses `2026` as the base-dollar year for inflation adjustments unless overridden.
+- Projection phases are age-banded: `0-12`, `13-17`, and `18-20`, with each phase using its configured blended annual return.
+- Contributions grow each year using `annual_contribution_growth_rate`, while compounding is simulated monthly for the balance engine.
+- Withdrawal scenarios start at age `18` and use North Carolina public-school anchors: UNC Chapel Hill and Central Piedmont Community College.
+- Tuition and room/board are inflated forward from 2026 assumptions using the child-specific inflation rate.
+- The withdrawal model targets `90%` 529 coverage by default and uses the phase-3 allocation return during college years.
+- Contributions can continue during withdrawal years through age `20`; the final college year does not assume a new contribution if the child is already past that boundary.
+- Student-loan overlays are separate household amortization scenarios, so they enrich the dashboard without changing the pure 529 projection math.
+
+### Fast setup recap
+
+For a reader who jumps straight here, the shortest path is:
+
+1. Create and activate a virtual environment.
+2. Install dependencies from [requirements.txt](requirements.txt).
+3. Start the app with [start_web.ps1](start_web.ps1) or `uvicorn app.main:app --reload --port 8001`.
+4. Set `AUTH_STEVEN_PASSWORD`, `AUTH_ALYSSA_PASSWORD`, and `AUTH_GUEST_PASSWORD` if you need authentication outside local development.
+5. Open `/` for the dashboard and `/health` to confirm the service is up.
+
+### Best for / not pretending to solve every education-finance problem
+
+**Best for**
+
+- showing whether a child’s 529 plan is directionally on track
+- comparing direct 4-year versus 2+2 college paths
+- seeing projected balances next to real yearly account snapshots
+- understanding how student-loan payoff tradeoffs sit beside education savings
+
+**Not pretending to solve everything**
+
+- private-school cost modeling across every geography
+- scholarship, grant, and aid optimization in full detail
+- tax-law edge cases around every qualified or non-qualified 529 withdrawal
+- certainty about future tuition inflation or market returns
