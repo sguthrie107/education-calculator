@@ -1,8 +1,9 @@
 """Balance management routes."""
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
+from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Child, Account529, ActualBalance
@@ -96,7 +97,7 @@ async def update_balance(balance_id: int, balance_data: BalanceUpdate, request: 
     if balance_data.notes is not None:
         balance.notes = sanitize_notes(balance_data.notes)
     if balance_changed:
-        balance.recorded_at = datetime.utcnow().isoformat()
+        balance.recorded_at = datetime.now(timezone.utc).isoformat()
 
     db.commit()
     db.refresh(balance)

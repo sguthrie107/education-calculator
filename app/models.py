@@ -1,7 +1,13 @@
 """SQLAlchemy ORM models."""
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, UniqueConstraint, CheckConstraint
-from sqlalchemy.orm import relationship, DeclarativeBase
-from datetime import datetime
+from datetime import datetime, timezone
+
+from sqlalchemy import CheckConstraint, Column, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy.orm import DeclarativeBase, relationship
+
+
+def _utc_now_iso() -> str:
+    """Return the current UTC timestamp as an ISO 8601 string."""
+    return datetime.now(timezone.utc).isoformat()
 
 
 class Base(DeclarativeBase):
@@ -14,7 +20,7 @@ class Child(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
-    created_at = Column(String, nullable=False, default=lambda: datetime.utcnow().isoformat())
+    created_at = Column(String, nullable=False, default=_utc_now_iso)
 
     accounts = relationship("Account529", back_populates="child", cascade="all, delete-orphan")
 
@@ -44,7 +50,7 @@ class ActualBalance(Base):
     year = Column(Integer, nullable=False)
     balance = Column(Float, nullable=False)
     notes = Column(String)
-    recorded_at = Column(String, nullable=False, default=lambda: datetime.utcnow().isoformat())
+    recorded_at = Column(String, nullable=False, default=_utc_now_iso)
 
     account = relationship("Account529", back_populates="actual_balances")
 

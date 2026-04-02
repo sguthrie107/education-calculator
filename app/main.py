@@ -1,18 +1,19 @@
 """FastAPI application factory."""
 import logging
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-log = logging.getLogger(__name__)
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from .database import init_db
-from .routes import dashboard, projections, balances
 from .auth import BasicAuthMiddleware
+from .database import init_db
+from .routes import balances, dashboard, projections
 from .security_headers import SecurityHeadersMiddleware
 
-BASE_DIR = Path(__file__).parent.parent
+log = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "app" / "static"
 
 
@@ -30,7 +31,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    """Create and configure FastAPI application."""
+    """Create and configure the FastAPI application."""
     app = FastAPI(
         title="Family Education Dashboard",
         description="Track and project education savings for up to 3 children with household loan payoff overlay",
@@ -38,7 +39,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Middleware (outermost first — security headers wrap auth wrap routes)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(BasicAuthMiddleware)
 
