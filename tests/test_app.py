@@ -28,6 +28,7 @@ def _db_session_factory():
 
     db = factory()
     db.add(Child(name="Alice"))
+    db.add(Child(name="Child 1"))
     db.commit()
     db.close()
 
@@ -311,6 +312,35 @@ class TestAuthHardening:
         assert good.status_code == 200
         assert bad_again.status_code == 401
         assert not auth_module._LOCKED_UNTIL_BY_IP
+
+
+class TestEducationStressTestRoutes:
+    def test_get_stress_test_empty(self, client):
+        response = client.get("/api/stress-test/Child%201")
+        assert response.status_code == 200
+        assert response.json() == {"result": None}
+
+    def test_recalculate_stress_test(self, client):
+        response = client.post(
+            "/api/stress-test/Child%201/recalculate",
+            json={"simulation_count": 5000, "random_seed": 42},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload.get("result") is not None
+
+        result = payload["result"]
+        assert result["child_name"] == "Child 1"
+        assert result["simulation_count"] == 5000
+        assert 0.0 <= float(result["success_probability_pct"]) <= 100.0
+        assert result["rating_grade"] in {"A", "B", "C", "D", "F"}
+
+    def test_get_stress_test_after_recalc(self, client):
+        response = client.get("/api/stress-test/Child%201")
+        assert response.status_code == 200
+        result = response.json().get("result")
+        assert result is not None
+        assert result["child_name"] == "Child 1"
 
 
 class TestSecurityHeaders:

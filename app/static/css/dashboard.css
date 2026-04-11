@@ -683,6 +683,157 @@ select:focus {
     margin-left: 0.5rem;
 }
 
+.stress-section {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.stress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.stress-header h2 {
+    margin-bottom: 0.2rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stress-header p {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+}
+
+.stress-card {
+    background: var(--background-light);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+}
+
+.stress-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 0.75rem;
+}
+
+.stress-score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+}
+
+.stress-score-percent {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stress-rating-chip {
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.stress-gauge {
+    position: relative;
+    margin: 0.5rem 0 1rem;
+    padding-top: 0.3rem;
+}
+
+.stress-gauge-track {
+    position: relative;
+    height: 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #EF4444 0%, #F97316 25%, #F59E0B 50%, #84CC16 75%, #16A34A 100%);
+    border: 1px solid var(--border);
+    overflow: visible;
+}
+
+.stress-gauge-marker {
+    position: absolute;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    background: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.65), 0 6px 14px rgba(15, 23, 42, 0.35);
+    transform: translate(-50%, -50%);
+}
+
+.stress-ticks {
+    margin-top: 0.5rem;
+    position: relative;
+    height: 1rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.stress-ticks span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.stress-ticks .tick-edge-left {
+    transform: translateX(0);
+}
+
+.stress-ticks .tick-edge-right {
+    transform: translateX(-100%);
+}
+
+.stress-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.75rem;
+}
+
+.stress-meta-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 0.8rem;
+}
+
+.stress-meta-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.73rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 0.2rem;
+}
+
+.stress-meta-value {
+    color: var(--text-primary);
+    font-size: 0.93rem;
+    font-weight: 600;
+}
+
+.stress-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem 1rem;
+}
+
 /* ── Delta / comparison table ───────────────────────────────── */
 .delta-section {
     background: var(--surface);

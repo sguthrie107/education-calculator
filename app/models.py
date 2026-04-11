@@ -23,6 +23,7 @@ class Child(Base):
     created_at = Column(String, nullable=False, default=_utc_now_iso)
 
     accounts = relationship("Account529", back_populates="child", cascade="all, delete-orphan")
+    stress_test_results = relationship("EducationStressTestResult", back_populates="child", cascade="all, delete-orphan")
 
 
 class Account529(Base):
@@ -57,4 +58,35 @@ class ActualBalance(Base):
     __table_args__ = (
         UniqueConstraint("account_id", "year", name="uq_account_year"),
         CheckConstraint("balance >= 0", name="ck_balance_positive"),
+    )
+
+
+class EducationStressTestResult(Base):
+    """Stored Monte Carlo result for one child's 4-year college payoff probability."""
+
+    __tablename__ = "education_stress_test_results"
+
+    id = Column(Integer, primary_key=True)
+    child_id = Column(Integer, ForeignKey("children.id"), nullable=False)
+    created_at = Column(String, nullable=False, default=_utc_now_iso)
+    simulation_count = Column(Integer, nullable=False)
+    random_seed = Column(Integer, nullable=True)
+    mean_return_pct = Column(Float, nullable=False)
+    volatility_pct = Column(Float, nullable=False)
+    inflation_pct = Column(Float, nullable=False)
+    success_probability_pct = Column(Float, nullable=False)
+    rating_tier = Column(Integer, nullable=False)
+    rating_grade = Column(String, nullable=False)
+    rating_label = Column(String, nullable=False)
+    p10_terminal_balance = Column(Float, nullable=False)
+    p50_terminal_balance = Column(Float, nullable=False)
+    p90_terminal_balance = Column(Float, nullable=False)
+    assumptions_json = Column(String, nullable=False, default="{}")
+
+    child = relationship("Child", back_populates="stress_test_results")
+
+    __table_args__ = (
+        CheckConstraint("simulation_count >= 5000", name="ck_edu_stress_simulation_count"),
+        CheckConstraint("success_probability_pct >= 0 AND success_probability_pct <= 100", name="ck_edu_stress_success_probability_range"),
+        CheckConstraint("rating_tier >= 1 AND rating_tier <= 5", name="ck_edu_stress_rating_tier_range"),
     )

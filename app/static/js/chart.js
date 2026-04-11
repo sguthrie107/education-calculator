@@ -7,6 +7,14 @@ const collapsedChildSections = new Set();
 let deductionModeEnabled = false;
 let deductionPathKey = 'direct_4yr';
 
+const stressTierStyles = {
+    5: { color: '#166534', bg: '#DCFCE7', border: '#86EFAC' },
+    4: { color: '#3F6212', bg: '#ECFCCB', border: '#BEF264' },
+    3: { color: '#92400E', bg: '#FEF3C7', border: '#FCD34D' },
+    2: { color: '#9A3412', bg: '#FFEDD5', border: '#FDBA74' },
+    1: { color: '#991B1B', bg: '#FEE2E2', border: '#FCA5A5' },
+};
+
 if (window.Chart) {
     Chart.defaults.font.family = 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
     Chart.defaults.color = '#5C3D2E';
@@ -26,6 +34,27 @@ const fmtYear = (n) => {
     if (Math.abs(n - rounded) < 0.01) return String(rounded);
     return n.toFixed(2);
 };
+
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '—';
+    try {
+        let isoString = String(timestamp);
+        if (!isoString.includes('Z') && !isoString.includes('+') && !isoString.includes('-', 10)) {
+            isoString += 'Z';
+        }
+        const date = new Date(isoString);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        });
+    } catch (_error) {
+        return String(timestamp);
+    }
+}
 
 function renderSplitLegend(datasets) {
     const accountsTarget = document.getElementById('legend529');
@@ -275,6 +304,7 @@ function onChildSelectionChange() {
                 renderSnapshotCards(data.children, householdLoanData);
                 renderFundingBreakdown(data.children);
                 renderAllDeltaTables(data.children);
+                renderStressTestHintForAllChildren();
             });
     } else {
         fetch('/api/comparison/' + encodeURIComponent(sel))
@@ -286,7 +316,169 @@ function onChildSelectionChange() {
                 renderSnapshotCards([data], householdLoanData);
                 renderFundingBreakdown([data]);
                 renderAllDeltaTables([data]);
+                loadStressTestResult(sel);
             });
+    }
+}
+
+function renderStressTestHintForAllChildren() {
+    const stressContent = document.getElementById('stressTestContent');
+    const recalcBtn = document.getElementById('recalculateStressBtn');
+    if (!stressContent) return;
+
+    if (recalcBtn) {
+        recalcBtn.disabled = true;
+        recalcBtn.title = 'Select a specific child to run stress testing.';
+    }
+
+    stressContent.innerHTML = `
+        <div class="stress-empty">
+            <p>Stress testing runs one fund at a time.</p>
+            <p>Select a specific child to load or recalculate their 4-year college Monte Carlo result.</p>
+        </div>
+    `;
+}
+
+async function loadStressTestResult(childName) {
+    const stressContent = document.getElementById('stressTestContent');
+    const recalcBtn = document.getElementById('recalculateStressBtn');
+    if (!stressContent || !childName || childName === 'all') {
+        return;
+    }
+
+    if (recalcBtn) {
+        recalcBtn.disabled = false;
+        recalcBtn.title = '';
+    }
+
+    stressContent.innerHTML = '<p class="loading">Loading latest stress test...</p>';
+
+    try {
+        const response = await fetch(`/api/stress-test/${encodeURIComponent(childName)}`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const payload = await response.json();
+        renderStressTestResult(payload.result, childName);
+    } catch (error) {
+        stressContent.innerHTML = `<p class="loading" style="color: #9A3412;">Unable to load stress test: ${error.message}</p>`;
+    }
+}
+
+function renderStressTestResult(result, childName) {
+    const stressContent = document.getElementById('stressTestContent');
+    if (!stressContent) return;
+
+    if (!result) {
+        stressContent.innerHTML = `
+            <div class="stress-empty">
+                <p>No stress test is stored yet for ${childName}.</p>
+                <p>Run <strong>Recalculate Stress Test</strong> to generate the latest Monte Carlo result.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const probability = Number(result.success_probability_pct || 0);
+    const markerLeft = Math.max(0, Math.min(100, probability));
+    const tier = Number(result.rating_tier || 1);
+    const tierStyle = stressTierStyles[tier] || stressTierStyles[1];
+
+    stressContent.innerHTML = `
+        <div class="stress-card">
+            <div class="stress-card-top">
+                <div class="stress-score">
+                    <span class="stress-score-percent" style="color: ${tierStyle.color};">${probability.toFixed(1)}%</span>
+                    <span class="stress-rating-chip" style="color: ${tierStyle.color}; background: ${tierStyle.bg}; border-color: ${tierStyle.border};">
+                        ${result.rating_grade} · ${result.rating_label}
+                    </span>
+                </div>
+            </div>
+
+            <div class="stress-gauge" aria-label="Probability of fully paying for 4-year college">
+                <div class="stress-gauge-track">
+                    <div class="stress-gauge-marker" style="left: ${markerLeft}%;"></div>
+                </div>
+                <div class="stress-ticks">
+                    <span class="tick-edge-left" style="left: 0%;">0%</span>
+                    <span style="left: 60%;">60%</span>
+                    <span style="left: 75%;">75%</span>
+                    <span style="left: 85%;">85%</span>
+                    <span style="left: 92%;">92%</span>
+                    <span class="tick-edge-right" style="left: 100%;">100%</span>
+                </div>
+            </div>
+
+            <div class="stress-meta">
+                <div class="stress-meta-item">
+                    <span class="stress-meta-label">Simulations</span>
+                    <span class="stress-meta-value">${Number(result.simulation_count || 0).toLocaleString()}</span>
+                </div>
+                <div class="stress-meta-item">
+                    <span class="stress-meta-label">Expected Return</span>
+                    <span class="stress-meta-value">${Number(result.mean_return_pct || 0).toFixed(2)}%</span>
+                </div>
+                <div class="stress-meta-item">
+                    <span class="stress-meta-label">Volatility</span>
+                    <span class="stress-meta-value">${Number(result.volatility_pct || 0).toFixed(2)}%</span>
+                </div>
+                <div class="stress-meta-item">
+                    <span class="stress-meta-label">Inflation</span>
+                    <span class="stress-meta-value">${Number(result.inflation_pct || 0).toFixed(2)}%</span>
+                </div>
+                <div class="stress-meta-item">
+                    <span class="stress-meta-label">P50 Terminal Balance</span>
+                    <span class="stress-meta-value">${fmt(Number(result.p50_terminal_balance || 0))}</span>
+                </div>
+                <div class="stress-meta-item">
+                    <span class="stress-meta-label">Last Calculated</span>
+                    <span class="stress-meta-value">${formatTimestamp(result.created_at)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function recalculateStressTest() {
+    const select = document.getElementById('childSelect');
+    const childName = select ? String(select.value || '') : '';
+    const stressContent = document.getElementById('stressTestContent');
+    const btn = document.getElementById('recalculateStressBtn');
+
+    if (!childName || childName === 'all') {
+        renderStressTestHintForAllChildren();
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Running Monte Carlo...';
+    }
+    if (stressContent) {
+        stressContent.innerHTML = '<p class="loading">Running stress test simulation...</p>';
+    }
+
+    try {
+        const response = await fetch(`/api/stress-test/${encodeURIComponent(childName)}/recalculate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ simulation_count: 10000 }),
+        });
+        if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        renderStressTestResult(payload.result, childName);
+    } catch (error) {
+        if (stressContent) {
+            stressContent.innerHTML = `<p class="loading" style="color: #9A3412;">Unable to recalculate: ${error.message}</p>`;
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Recalculate Stress Test';
+        }
     }
 }
 
@@ -711,6 +903,9 @@ window.renderAllDeltaTables = renderAllDeltaTables;
 window.toggleChildDeltaBlock = toggleChildDeltaBlock;
 window.onDeductionToggleChange = onDeductionToggleChange;
 window.onDeductionPathChange = onDeductionPathChange;
+window.renderStressTestHintForAllChildren = renderStressTestHintForAllChildren;
+window.loadStressTestResult = loadStressTestResult;
+window.recalculateStressTest = recalculateStressTest;
 window.showBalanceForm = showBalanceForm;
 window.hideBalanceForm = hideBalanceForm;
 window.submitBalance = submitBalance;

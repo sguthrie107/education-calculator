@@ -63,6 +63,19 @@
     <div id="fundingBreakdownCards" class="snapshot-cards"></div>
 </div>
 
+<div id="stressTestSection" class="stress-section">
+    <div class="stress-header">
+        <div>
+            <h2>Education Stress Test</h2>
+            <p>Monte Carlo simulation for a single 529 fund covering a 4-year university path.</p>
+        </div>
+        <button onclick="recalculateStressTest()" class="btn-primary" id="recalculateStressBtn">Recalculate Stress Test</button>
+    </div>
+    <div id="stressTestContent">
+        <p class="loading">Select a child to view the latest stress test result.</p>
+    </div>
+</div>
+
 <div id="deltaTable" class="delta-section">
     <div class="delta-header">
         <div>
@@ -167,6 +180,7 @@
             renderSnapshotCards(initialData.children, initialData.household_loan || null);
             renderFundingBreakdown(initialData.children);
             renderAllDeltaTables(initialData.children);
+            renderStressTestHintForAllChildren();
         } catch (error) {
             document.getElementById('deltaContent').innerHTML =
                 '<p style="color: var(--danger-color);">Error: ' + error.message + '</p>';
