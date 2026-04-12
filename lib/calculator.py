@@ -4,6 +4,7 @@ Pure financial math — no database, no HTTP, no UI.
 Takes child configuration and returns year-by-year projected balances
 with phase-aware allocation switching.
 """
+import functools
 import json
 from pathlib import Path
 
@@ -18,12 +19,18 @@ PHASE_BOUNDARIES = [
 ]
 
 
-def load_children_config() -> list[dict]:
-    """Load all children from children.json."""
+@functools.lru_cache(maxsize=1)
+def _load_children_config_cached() -> list[dict]:
+    """Load all children from children.json once per process."""
     children_file = DATA_DIR / "children.json"
     with open(children_file, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get("children", [])
+
+
+def load_children_config() -> list[dict]:
+    """Load all children from children.json."""
+    return _load_children_config_cached()
 
 
 def get_child_config(child_name: str) -> dict:

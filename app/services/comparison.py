@@ -1,4 +1,6 @@
 """Comparison service — merges projected and actual balances."""
+from collections import defaultdict
+
 from sqlalchemy.orm import Session
 
 from ..models import Child, Account529, ActualBalance
@@ -8,7 +10,46 @@ from .education_withdrawals import build_child_withdrawal_scenarios
 from lib.calculator import get_child_config
 
 
-def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> dict:
+def _load_actual_balances_for_children(db: Session, child_names: list[str]) -> dict[str, dict[int, dict]]:
+    if not child_names:
+        return {}
+
+    rows = (
+        db.query(
+            Child.name.label("child_name"),
+            ActualBalance.id.label("id"),
+            ActualBalance.year.label("year"),
+            ActualBalance.balance.label("balance"),
+            ActualBalance.notes.label("notes"),
+            ActualBalance.recorded_at.label("recorded_at"),
+        )
+        .join(Account529, Account529.child_id == Child.id)
+        .join(ActualBalance, ActualBalance.account_id == Account529.id)
+        .filter(Child.name.in_(child_names))
+        .order_by(ActualBalance.year)
+        .all()
+    )
+
+    actual_by_child: dict[str, dict[int, dict]] = defaultdict(dict)
+    for row in rows:
+        actual_by_child[row.child_name][int(row.year)] = {
+            "id": int(row.id),
+            "year": int(row.year),
+            "balance": float(row.balance),
+            "notes": row.notes,
+            "recorded_at": row.recorded_at,
+        }
+
+    return actual_by_child
+
+
+def get_comparison_data(
+    child_name: str,
+    db: Session,
+    base_year: int = 2026,
+    precomputed_projection: dict | None = None,
+    preloaded_actual_by_year: dict[int, dict] | None = None,
+) -> dict:
     """Build comparison payload: projected vs actual with deltas.
 
     Returns:
@@ -20,7 +61,7 @@ def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> 
             "deltas": [...]
         }
     """
-    projection = get_child_projection(child_name, base_year=base_year)
+    projection = precomputed_projection or get_child_projection(child_name, base_year=base_year)
     child_config = get_child_config(child_name)
     withdrawal_scenarios = build_child_withdrawal_scenarios(
         child_config=child_config,
@@ -30,29 +71,30 @@ def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> 
     )
 
     # Fetch actual balances from DB
-    actual_by_year = {}
-    child = db.query(Child).filter(Child.name == child_name).first()
-    if child:
-        account = (
-            db.query(Account529)
-            .filter(Account529.child_id == child.id)
-            .first()
-        )
-        if account:
-            balances = (
-                db.query(ActualBalance)
-                .filter(ActualBalance.account_id == account.id)
-                .order_by(ActualBalance.year)
-                .all()
+    actual_by_year = preloaded_actual_by_year or {}
+    if preloaded_actual_by_year is None:
+        child = db.query(Child).filter(Child.name == child_name).first()
+        if child:
+            account = (
+                db.query(Account529)
+                .filter(Account529.child_id == child.id)
+                .first()
             )
-            for b in balances:
-                actual_by_year[b.year] = {
-                    "id": b.id,
-                    "year": b.year,
-                    "balance": b.balance,
-                    "notes": b.notes,
-                    "recorded_at": b.recorded_at,
-                }
+            if account:
+                balances = (
+                    db.query(ActualBalance)
+                    .filter(ActualBalance.account_id == account.id)
+                    .order_by(ActualBalance.year)
+                    .all()
+                )
+                for b in balances:
+                    actual_by_year[b.year] = {
+                        "id": b.id,
+                        "year": b.year,
+                        "balance": b.balance,
+                        "notes": b.notes,
+                        "recorded_at": b.recorded_at,
+                    }
 
     # Build actual list aligned to projection years
     actual_list = []
@@ -94,9 +136,18 @@ def get_comparison_data(child_name: str, db: Session, base_year: int = 2026) -> 
 def get_all_children_comparison(db: Session, base_year: int = 2026) -> dict:
     """Get comparison data for all children."""
     all_projections = get_all_projections(base_year=base_year)
+    child_names = [proj["child_name"] for proj in all_projections]
+    actual_by_child = _load_actual_balances_for_children(db, child_names)
     children_data = []
     for proj in all_projections:
-        comparison = get_comparison_data(proj["child_name"], db, base_year=base_year)
+        child_name = proj["child_name"]
+        comparison = get_comparison_data(
+            child_name,
+            db,
+            base_year=base_year,
+            precomputed_projection=proj,
+            preloaded_actual_by_year=actual_by_child.get(child_name, {}),
+        )
         children_data.append(comparison)
     household_loan = build_household_student_loan_projection(base_year=base_year)
     return {
