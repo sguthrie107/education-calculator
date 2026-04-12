@@ -305,6 +305,12 @@ function onChildSelectionChange() {
                 renderFundingBreakdown(data.children);
                 renderAllDeltaTables(data.children);
                 renderStressTestHintForAllChildren();
+            })
+            .catch((error) => {
+                const stressContent = document.getElementById('stressTestContent');
+                if (stressContent) {
+                    stressContent.innerHTML = `<p class="loading" style="color: #9A3412;">Unable to load data: ${error.message}</p>`;
+                }
             });
     } else {
         fetch('/api/comparison/' + encodeURIComponent(sel))
@@ -317,6 +323,12 @@ function onChildSelectionChange() {
                 renderFundingBreakdown([data]);
                 renderAllDeltaTables([data]);
                 loadStressTestResult(sel);
+            })
+            .catch((error) => {
+                const stressContent = document.getElementById('stressTestContent');
+                if (stressContent) {
+                    stressContent.innerHTML = `<p class="loading" style="color: #9A3412;">Unable to load child data: ${error.message}</p>`;
+                }
             });
     }
 }
@@ -327,14 +339,16 @@ function renderStressTestHintForAllChildren() {
     if (!stressContent) return;
 
     if (recalcBtn) {
-        recalcBtn.disabled = true;
+        recalcBtn.disabled = false;
         recalcBtn.title = 'Select a specific child to run stress testing.';
+        recalcBtn.textContent = 'Recalculate Stress Test';
     }
 
     stressContent.innerHTML = `
         <div class="stress-empty">
             <p>Stress testing runs one fund at a time.</p>
             <p>Select a specific child to load or recalculate their 4-year college Monte Carlo result.</p>
+            <p>Clicking <strong>Recalculate Stress Test</strong> while viewing all children will keep this reminder visible.</p>
         </div>
     `;
 }

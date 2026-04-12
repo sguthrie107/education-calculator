@@ -230,6 +230,17 @@ uvicorn app.main:app --reload --port 8001
 
 The app runs on `8001` to avoid collision with retirement app default `8000`.
 
+### Running tests
+
+After creating your virtual environment and installing dependencies, run:
+
+```powershell
+cd education-calculator
+.\venv\Scripts\python.exe -m pytest -q
+```
+
+This runs the full test suite and prints a compact summary (for example, `43 passed`).
+
 ---
 
 ## 10) Railway hosting (how deployment works)
