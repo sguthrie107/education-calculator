@@ -132,6 +132,9 @@ def _simulate_single_trial(
     base_year: int,
     inflation_rate: float,
     rng: random.Random,
+    precomputed_moments: dict[int, tuple[float, float]] | None = None,
+    precomputed_contributions: dict[int, float] | None = None,
+    precomputed_college_costs: dict[int, float] | None = None,
 ) -> tuple[bool, float]:
     birth_year = int(child_config["birth_year"])
     college_start_year = birth_year + 18
@@ -151,7 +154,10 @@ def _simulate_single_trial(
 
     for year in range(birth_year, college_end_year + 1):
         age = year - birth_year
-        mean_return, volatility = _phase_moments_for_age(child_config, age)
+        if precomputed_moments is not None:
+            mean_return, volatility = precomputed_moments[age]
+        else:
+            mean_return, volatility = _phase_moments_for_age(child_config, age)
         if year < simulation_start_year:
             annual_return = mean_return
         else:
@@ -159,25 +165,31 @@ def _simulate_single_trial(
 
         annual_contribution = 0.0
         if age <= 20:
-            annual_contribution = _monthly_contribution_for_age(child_config, age) * 12.0
+            if precomputed_contributions is not None:
+                annual_contribution = precomputed_contributions[age]
+            else:
+                annual_contribution = _monthly_contribution_for_age(child_config, age) * 12.0
 
         balance = max(balance * (1.0 + annual_return), 0.0)
         balance += annual_contribution
 
         if year >= college_start_year:
-            tuition = inflate_from_base_year(
-                NC_COST_ASSUMPTIONS_2026["university"]["tuition"],
-                base_year,
-                year,
-                inflation_rate,
-            )
-            room_board = inflate_from_base_year(
-                NC_COST_ASSUMPTIONS_2026["university"]["room_board"],
-                base_year,
-                year,
-                inflation_rate,
-            )
-            annual_cost = tuition + room_board
+            if precomputed_college_costs is not None:
+                annual_cost = precomputed_college_costs[year]
+            else:
+                tuition = inflate_from_base_year(
+                    NC_COST_ASSUMPTIONS_2026["university"]["tuition"],
+                    base_year,
+                    year,
+                    inflation_rate,
+                )
+                room_board = inflate_from_base_year(
+                    NC_COST_ASSUMPTIONS_2026["university"]["room_board"],
+                    base_year,
+                    year,
+                    inflation_rate,
+                )
+                annual_cost = tuition + room_board
             if balance >= annual_cost:
                 balance -= annual_cost
             else:
@@ -271,6 +283,31 @@ def run_stress_test(
     successes = 0
     terminal_balances: list[float] = []
 
+    # --- Precompute deterministic per-age/year quantities once ---
+    college_start_year = birth_year + 18
+    college_end_year = college_start_year + 3
+    max_age = college_end_year - birth_year
+
+    precomputed_moments: dict[int, tuple[float, float]] = {}
+    for _age in range(0, max_age + 1):
+        precomputed_moments[_age] = _phase_moments_for_age(child_config, _age)
+
+    precomputed_contributions: dict[int, float] = {}
+    for _age in range(0, 21):
+        precomputed_contributions[_age] = _monthly_contribution_for_age(child_config, _age) * 12.0
+
+    precomputed_college_costs: dict[int, float] = {}
+    for _year in range(college_start_year, college_end_year + 1):
+        _tuition = inflate_from_base_year(
+            NC_COST_ASSUMPTIONS_2026["university"]["tuition"],
+            base_year, _year, inflation_rate,
+        )
+        _room_board = inflate_from_base_year(
+            NC_COST_ASSUMPTIONS_2026["university"]["room_board"],
+            base_year, _year, inflation_rate,
+        )
+        precomputed_college_costs[_year] = _tuition + _room_board
+
     for _ in range(simulation_count):
         success, terminal_balance = _simulate_single_trial(
             child_config=child_config,
@@ -278,6 +315,9 @@ def run_stress_test(
             base_year=base_year,
             inflation_rate=inflation_rate,
             rng=rng,
+            precomputed_moments=precomputed_moments,
+            precomputed_contributions=precomputed_contributions,
+            precomputed_college_costs=precomputed_college_costs,
         )
         if success:
             successes += 1
