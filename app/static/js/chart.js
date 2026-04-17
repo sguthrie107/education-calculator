@@ -223,6 +223,7 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             interaction: { mode: 'x', intersect: false },
             layout: {
                 padding: {
+                    top: 12,
                     right: 10,
                 },
             },
