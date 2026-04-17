@@ -2,7 +2,7 @@
   "children": [
     {
       "name": "Child 1",
-      "birth_year": 2026,
+      "birth_year": 2027,
       "initial_investment": 2500.00,
       "monthly_contribution": 200.00,
       "fund_provider": "Vanguard",
@@ -77,7 +77,7 @@
     },
     {
       "name": "Child 2",
-      "birth_year": 2029,
+      "birth_year": 2030,
       "initial_investment": 2500.00,
       "monthly_contribution": 200.00,
       "fund_provider": "Vanguard",
@@ -152,7 +152,7 @@
     },
     {
       "name": "Child 3",
-      "birth_year": 2032,
+      "birth_year": 2033,
       "initial_investment": 2500.00,
       "monthly_contribution": 200.00,
       "fund_provider": "Vanguard",
