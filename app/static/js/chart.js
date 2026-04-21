@@ -3,7 +3,7 @@
 let chartInstance = null;
 let allChildrenData = [];
 let householdLoanData = null;
-const collapsedChildSections = new Set();
+const childSectionCollapsedState = new Map();
 let deductionModeEnabled = false;
 let deductionPathKey = 'direct_4yr';
 
@@ -754,7 +754,12 @@ function renderChildDeltaBlock(child) {
 
     const childKey = `${child.child_name}-${child.birth_year}`;
     const blockId = 'child-delta-' + childKey.replace(/[^a-zA-Z0-9_-]/g, '-');
-    const isCollapsed = collapsedChildSections.has(childKey);
+    const hasActualData = Array.isArray(child.actual) && child.actual.length > 0;
+    const hasDeltaData = Array.isArray(child.deltas) && child.deltas.length > 0;
+    const hasComparisonData = hasActualData || hasDeltaData;
+    const isCollapsed = childSectionCollapsedState.has(childKey)
+        ? childSectionCollapsedState.get(childKey)
+        : !hasComparisonData;
     const arrow = isCollapsed ? '▸' : '▾';
 
     let html = `<div class="child-delta-block ${isCollapsed ? 'collapsed' : ''}" id="${blockId}" data-child-key="${childKey}">
@@ -834,12 +839,7 @@ function toggleChildDeltaBlock(blockId) {
     const nowCollapsed = !block.classList.contains('collapsed');
 
     block.classList.toggle('collapsed', nowCollapsed);
-
-    if (nowCollapsed) {
-        collapsedChildSections.add(childKey);
-    } else {
-        collapsedChildSections.delete(childKey);
-    }
+    childSectionCollapsedState.set(childKey, nowCollapsed);
 
     if (btn) {
         btn.textContent = nowCollapsed ? '▸' : '▾';
