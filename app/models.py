@@ -61,6 +61,24 @@ class ActualBalance(Base):
     )
 
 
+class ActualLoanBalance(Base):
+    """Monthly actual loan balance snapshot for the household student loan."""
+    __tablename__ = "actual_loan_balances"
+
+    id = Column(Integer, primary_key=True)
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    balance = Column(Float, nullable=False)
+    notes = Column(String)
+    recorded_at = Column(String, nullable=False, default=_utc_now_iso)
+
+    __table_args__ = (
+        UniqueConstraint("year", "month", name="uq_loan_year_month"),
+        CheckConstraint("balance >= 0", name="ck_loan_balance_positive"),
+        CheckConstraint("month >= 1 AND month <= 12", name="ck_loan_month_range"),
+    )
+
+
 class EducationStressTestResult(Base):
     """Stored Monte Carlo result for one child's 4-year college payoff probability."""
 

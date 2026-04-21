@@ -169,6 +169,31 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
     });
 
     if (householdLoanProjection) {
+        // Plot actual loan balance dots if any exist
+        const actualLoanBalances = Array.isArray(householdLoanProjection.actual_balances)
+            ? householdLoanProjection.actual_balances
+            : [];
+        if (actualLoanBalances.length > 0) {
+            const actualLoanPoints = actualLoanBalances.map(a => ({
+                x: Number(a.fractional_year),
+                y: Number(a.balance),
+            }));
+            actualLoanPoints.forEach(point => allXValues.push(point.x));
+            datasets.push({
+                label: 'Student Loan (Actual)',
+                data: actualLoanPoints,
+                datasetType: 'loan',
+                borderColor: '#7C3AED',
+                backgroundColor: '#7C3AED',
+                borderWidth: 0,
+                pointRadius: 7,
+                pointHoverRadius: 9,
+                pointStyle: 'rectRounded',
+                showLine: false,
+                spanGaps: false,
+            });
+        }
+
         const scenarioLines = Array.isArray(householdLoanProjection.scenarios)
             ? householdLoanProjection.scenarios
             : (householdLoanProjection.scenario ? [householdLoanProjection.scenario] : []);
@@ -305,6 +330,7 @@ function onChildSelectionChange() {
                 renderSnapshotCards(data.children, householdLoanData);
                 renderFundingBreakdown(data.children);
                 renderAllDeltaTables(data.children);
+                renderLoanHistory(householdLoanData);
                 renderStressTestHintForAllChildren();
             })
             .catch((error) => {
@@ -323,6 +349,7 @@ function onChildSelectionChange() {
                 renderSnapshotCards([data], householdLoanData);
                 renderFundingBreakdown([data]);
                 renderAllDeltaTables([data]);
+                renderLoanHistory(householdLoanData);
                 loadStressTestResult(sel);
             })
             .catch((error) => {
@@ -906,6 +933,149 @@ function deleteBalance(balanceId, childName) {
         .catch(err => alert(err.message));
 }
 
+// ── Loan balance CRUD ──────────────────────────────────────────
+
+const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function renderLoanHistory(householdLoanProjection) {
+    const container = document.getElementById('loanHistoryContent');
+    if (!container) return;
+
+    const entries = householdLoanProjection?.actual_balances || [];
+
+    if (!entries.length) {
+        container.innerHTML = '<p class="loading">No loan balance entries yet. Click <strong>Add Loan Balance</strong> to record your first entry.</p>';
+        return;
+    }
+
+    let html = '<div class="table-wrap"><table><thead><tr>' +
+        '<th>Month</th><th>Year</th><th>Balance</th><th>Notes</th><th>Recorded</th><th>Actions</th>' +
+        '</tr></thead><tbody>';
+
+    entries.forEach(entry => {
+        const monthName = MONTH_NAMES[entry.month] || entry.month;
+        html += `<tr>
+            <td>${monthName}</td>
+            <td>${entry.year}</td>
+            <td>${fmt(entry.balance)}</td>
+            <td>${entry.notes ? entry.notes.replace(/</g, '&lt;') : '—'}</td>
+            <td>${formatTimestamp(entry.recorded_at)}</td>
+            <td><div class="action-buttons">
+                <button class="btn-edit" onclick="showEditLoanBalanceForm(${entry.id}, ${entry.year}, ${entry.month}, ${entry.balance}, '${(entry.notes || '').replace(/'/g, "\\'")}')">✏️</button>
+                <button class="btn-delete" onclick="deleteLoanBalance(${entry.id})">🗑️</button>
+            </div></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function showLoanBalanceForm() {
+    const yearSelect = document.getElementById('loanBalanceYear');
+    yearSelect.innerHTML = '';
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y >= 2020; y--) {
+        yearSelect.innerHTML += `<option value="${y}"${y === currentYear ? ' selected' : ''}>${y}</option>`;
+    }
+    // Pre-select current month
+    const currentMonth = new Date().getMonth() + 1;
+    document.getElementById('loanBalanceMonth').value = String(currentMonth);
+    document.getElementById('loanBalanceModal').style.display = 'flex';
+}
+
+function hideLoanBalanceForm() {
+    document.getElementById('loanBalanceModal').style.display = 'none';
+    document.getElementById('loanBalanceForm').reset();
+}
+
+function submitLoanBalance(e) {
+    e.preventDefault();
+    const year = parseInt(document.getElementById('loanBalanceYear').value);
+    const month = parseInt(document.getElementById('loanBalanceMonth').value);
+    const balance = parseFloat(document.getElementById('loanBalanceAmount').value);
+    const notes = document.getElementById('loanBalanceNotes').value || null;
+
+    fetch('/api/loan-balances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year, month, balance, notes }),
+    })
+        .then(r => {
+            if (!r.ok) return r.json().then(d => { throw new Error(d.detail || 'Save failed'); });
+            return r.json();
+        })
+        .then(() => {
+            hideLoanBalanceForm();
+            refreshLoanData();
+        })
+        .catch(err => alert(err.message));
+}
+
+function showEditLoanBalanceForm(id, year, month, balance, notes) {
+    document.getElementById('editLoanBalanceId').value = id;
+    document.getElementById('editLoanPeriod').value = `${MONTH_NAMES[month] || month} ${year}`;
+    document.getElementById('editLoanAmount').value = balance;
+    document.getElementById('editLoanNotes').value = notes || '';
+    document.getElementById('editLoanBalanceModal').style.display = 'flex';
+}
+
+function hideEditLoanBalanceForm() {
+    document.getElementById('editLoanBalanceModal').style.display = 'none';
+}
+
+function submitEditLoanBalance(e) {
+    e.preventDefault();
+    const id = document.getElementById('editLoanBalanceId').value;
+    const balance = parseFloat(document.getElementById('editLoanAmount').value);
+    const notes = document.getElementById('editLoanNotes').value || null;
+
+    fetch('/api/loan-balances/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ balance, notes }),
+    })
+        .then(r => {
+            if (!r.ok) return r.json().then(d => { throw new Error(d.detail || 'Update failed'); });
+            return r.json();
+        })
+        .then(() => {
+            hideEditLoanBalanceForm();
+            refreshLoanData();
+        })
+        .catch(err => alert(err.message));
+}
+
+function deleteLoanBalance(id) {
+    if (!confirm('Delete this loan balance entry?')) return;
+
+    fetch('/api/loan-balances/' + id, { method: 'DELETE' })
+        .then(r => {
+            if (!r.ok) throw new Error('Delete failed');
+            refreshLoanData();
+        })
+        .catch(err => alert(err.message));
+}
+
+function refreshLoanData() {
+    fetch('/api/comparison-all')
+        .then(r => r.json())
+        .then(data => {
+            householdLoanData = data.household_loan || householdLoanData;
+            renderLoanHistory(householdLoanData);
+            // Redraw chart to update actual loan dots
+            const sel = document.getElementById('childSelect');
+            if (sel && sel.value !== 'all') {
+                renderSingleChildChart(allChildrenData[0] || null, householdLoanData);
+            } else {
+                renderAllChildrenChart(allChildrenData, householdLoanData);
+            }
+            renderSnapshotCards(allChildrenData, householdLoanData);
+        })
+        .catch(err => alert('Failed to refresh loan data: ' + err.message));
+}
+
 // ── Expose on window for inline handlers ───────────────────────
 
 window.renderAllChildrenChart = renderAllChildrenChart;
@@ -928,3 +1098,12 @@ window.showEditBalanceForm = showEditBalanceForm;
 window.hideEditBalanceForm = hideEditBalanceForm;
 window.submitEditBalance = submitEditBalance;
 window.deleteBalance = deleteBalance;
+window.renderLoanHistory = renderLoanHistory;
+window.showLoanBalanceForm = showLoanBalanceForm;
+window.hideLoanBalanceForm = hideLoanBalanceForm;
+window.submitLoanBalance = submitLoanBalance;
+window.showEditLoanBalanceForm = showEditLoanBalanceForm;
+window.hideEditLoanBalanceForm = hideEditLoanBalanceForm;
+window.submitEditLoanBalance = submitEditLoanBalance;
+window.deleteLoanBalance = deleteLoanBalance;
+window.refreshLoanData = refreshLoanData;

@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from ..models import Child, Account529, ActualBalance
+from ..models import Child, Account529, ActualBalance, ActualLoanBalance
 from .projection import get_child_projection, get_all_projections
 from .loans import build_household_student_loan_projection
 from .education_withdrawals import build_child_withdrawal_scenarios
@@ -133,6 +133,27 @@ def get_comparison_data(
     }
 
 
+def _load_actual_loan_balances(db: Session) -> list[dict]:
+    """Load all actual loan balance entries ordered by year/month."""
+    rows = (
+        db.query(ActualLoanBalance)
+        .order_by(ActualLoanBalance.year, ActualLoanBalance.month)
+        .all()
+    )
+    return [
+        {
+            "id": int(row.id),
+            "year": int(row.year),
+            "month": int(row.month),
+            "balance": float(row.balance),
+            "notes": row.notes,
+            "recorded_at": row.recorded_at,
+            "fractional_year": round(row.year + (row.month - 1) / 12.0, 4),
+        }
+        for row in rows
+    ]
+
+
 def get_all_children_comparison(db: Session, base_year: int = 2026) -> dict:
     """Get comparison data for all children."""
     all_projections = get_all_projections(base_year=base_year)
@@ -150,6 +171,8 @@ def get_all_children_comparison(db: Session, base_year: int = 2026) -> dict:
         )
         children_data.append(comparison)
     household_loan = build_household_student_loan_projection(base_year=base_year)
+    actual_loan_balances = _load_actual_loan_balances(db)
+    household_loan["actual_balances"] = actual_loan_balances
     return {
         "children": children_data,
         "household_loan": household_loan,

@@ -89,6 +89,19 @@
     </div>
 </div>
 
+<div id="loanHistoryTable" class="delta-section">
+    <div class="delta-header">
+        <div>
+            <h2>Student Loan Payment History</h2>
+            <p>Record your actual monthly loan balances to track real payoff progress against the projections.</p>
+        </div>
+        <button onclick="showLoanBalanceForm()" class="btn-primary" id="addLoanBalanceBtn">Add Loan Balance</button>
+    </div>
+    <div id="loanHistoryContent">
+        <p class="loading">Loading loan history...</p>
+    </div>
+</div>
+
 <!-- Balance entry form modal -->
 <div id="balanceModal" class="modal" style="display: none;">
     <div class="modal-content">
@@ -161,10 +174,88 @@
         </form>
     </div>
 </div>
+
+<!-- Add loan balance modal -->
+<div id="loanBalanceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="hideLoanBalanceForm()">&times;</span>
+        <h2>Add Loan Balance</h2>
+        <form id="loanBalanceForm" onsubmit="submitLoanBalance(event)">
+            <div class="form-group">
+                <label for="loanBalanceYear">Year:</label>
+                <select id="loanBalanceYear" required></select>
+            </div>
+
+            <div class="form-group">
+                <label for="loanBalanceMonth">Month:</label>
+                <select id="loanBalanceMonth" required>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="loanBalanceAmount">Loan Balance ($):</label>
+                <input type="number" id="loanBalanceAmount" min="0" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="loanBalanceNotes">Notes (optional):</label>
+                <textarea id="loanBalanceNotes" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+                <button type="button" class="btn-secondary" onclick="hideLoanBalanceForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit loan balance modal -->
+<div id="editLoanBalanceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="hideEditLoanBalanceForm()">&times;</span>
+        <h2>Edit Loan Balance</h2>
+        <form id="editLoanBalanceForm" onsubmit="submitEditLoanBalance(event)">
+            <input type="hidden" id="editLoanBalanceId">
+
+            <div class="form-group">
+                <label for="editLoanPeriod">Period:</label>
+                <input type="text" id="editLoanPeriod" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="editLoanAmount">Loan Balance ($):</label>
+                <input type="number" id="editLoanAmount" min="0" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="editLoanNotes">Notes (optional):</label>
+                <textarea id="editLoanNotes" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Update</button>
+                <button type="button" class="btn-secondary" onclick="hideEditLoanBalanceForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/chart.js?v=20260412-stress-button-fix"></script>
+<script src="/static/js/chart.js?v=20260421-loan-actuals"></script>
 <script>
     const initialData = {{ initial_data | tojson | safe }};
 
@@ -180,6 +271,7 @@
             renderSnapshotCards(initialData.children, initialData.household_loan || null);
             renderFundingBreakdown(initialData.children);
             renderAllDeltaTables(initialData.children);
+            renderLoanHistory(initialData.household_loan || null);
             renderStressTestHintForAllChildren();
         } catch (error) {
             document.getElementById('deltaContent').innerHTML =

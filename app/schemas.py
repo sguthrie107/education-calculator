@@ -47,6 +47,29 @@ class ComparisonResponse(BaseModel):
     deltas: list[dict]
 
 
+class LoanBalanceCreate(BaseModel):
+    year: int = Field(ge=2000, le=2100)
+    month: int = Field(ge=1, le=12)
+    balance: float = Field(ge=0)
+    notes: Optional[str] = None
+
+
+class LoanBalanceUpdate(BaseModel):
+    balance: float = Field(ge=0)
+    notes: Optional[str] = None
+
+
+class LoanBalanceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    year: int
+    month: int
+    balance: float
+    notes: Optional[str]
+    recorded_at: str
+
+
 class EducationStressTestRecalculateRequest(BaseModel):
     simulation_count: int = Field(default=10000, ge=5000, le=100000)
     random_seed: Optional[int] = Field(default=None, ge=0)

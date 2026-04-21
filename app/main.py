@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .auth import BasicAuthMiddleware
 from .database import init_db
-from .routes import balances, dashboard, projections, stress_test
+from .routes import balances, dashboard, loan_balances, projections, stress_test
 from .security_headers import SecurityHeadersMiddleware
 
 log = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router, tags=["dashboard"])
     app.include_router(projections.router, tags=["projections"])
     app.include_router(balances.router, tags=["balances"])
+    app.include_router(loan_balances.router, tags=["loan_balances"])
     app.include_router(stress_test.router, tags=["stress_test"])
 
     @app.get("/health", include_in_schema=False)
