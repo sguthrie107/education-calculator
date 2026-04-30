@@ -249,6 +249,7 @@ function renderAllChildrenChart(childrenData, householdLoanProjection = null) {
             layout: {
                 padding: {
                     top: 12,
+                    left: 28,
                     right: 10,
                 },
             },
