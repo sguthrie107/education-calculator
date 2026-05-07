@@ -851,7 +851,22 @@ function toggleChildDeltaBlock(blockId) {
 
 // ── Balance CRUD ───────────────────────────────────────────────
 
+function resetBalanceFormState() {
+    const form = document.getElementById('balanceForm');
+    if (form) {
+        form.reset();
+    }
+
+    const submitButton = form ? form.querySelector('button[type="submit"]') : null;
+    if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Save';
+    }
+}
+
 function showBalanceForm() {
+    resetBalanceFormState();
+
     const yearSelect = document.getElementById('balanceYear');
     yearSelect.innerHTML = '<option value="">-- Select a year --</option>';
     const currentYear = new Date().getFullYear();
@@ -863,15 +878,22 @@ function showBalanceForm() {
 
 function hideBalanceForm() {
     document.getElementById('balanceModal').style.display = 'none';
-    document.getElementById('balanceForm').reset();
+    resetBalanceFormState();
 }
 
 function submitBalance(e) {
     e.preventDefault();
+    const form = document.getElementById('balanceForm');
+    const submitButton = form ? form.querySelector('button[type="submit"]') : null;
     const childName = document.getElementById('balanceChild').value;
     const year = parseInt(document.getElementById('balanceYear').value);
     const balance = parseFloat(document.getElementById('balanceAmount').value);
     const notes = document.getElementById('balanceNotes').value || null;
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Saving...';
+    }
 
     fetch('/api/balances/' + encodeURIComponent(childName), {
         method: 'POST',
@@ -886,7 +908,13 @@ function submitBalance(e) {
             hideBalanceForm();
             onChildSelectionChange(); // Refresh
         })
-        .catch(err => alert(err.message));
+        .catch(err => alert(err.message))
+        .finally(() => {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Save';
+            }
+        });
 }
 
 function showEditBalanceForm(balanceId, year, balance, notes) {
