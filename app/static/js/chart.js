@@ -6,6 +6,7 @@ let householdLoanData = null;
 const childSectionCollapsedState = new Map();
 let deductionModeEnabled = false;
 let deductionPathKey = 'direct_4yr';
+const APP_FONT_FAMILY = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
 const stressTierStyles = {
     5: { color: '#166534', bg: '#DCFCE7', border: '#86EFAC' },
@@ -16,7 +17,7 @@ const stressTierStyles = {
 };
 
 if (window.Chart) {
-    Chart.defaults.font.family = 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    Chart.defaults.font.family = APP_FONT_FAMILY;
     Chart.defaults.color = '#5C3D2E';
 }
 
