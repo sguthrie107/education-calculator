@@ -43,34 +43,22 @@ body {
     overflow-x: hidden;
 }
 
-body::before,
-body::after {
+body::before {
     content: "";
     position: fixed;
-    inset: -64px;
+    inset: -26px;
     pointer-events: none;
     z-index: 0;
     background-repeat: repeat;
+    background-image:
+        radial-gradient(circle, var(--dot-grid-color) 1.2px, transparent 1.3px),
+        radial-gradient(circle, var(--dot-grid-color-soft) 1px, transparent 1.1px);
+    background-size: 26px 26px, 26px 26px;
+    background-position: 0 0, 13px 13px;
     will-change: transform;
     backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
-}
-
-body::before {
-    background-image:
-        radial-gradient(circle, var(--dot-grid-color) 1.2px, transparent 1.3px);
-    background-size: 26px 26px;
-    animation: dot-wave-primary 26s linear infinite;
+    animation: dot-wave 30s linear infinite;
     opacity: 0.8;
-}
-
-body::after {
-    background-image:
-        radial-gradient(circle, var(--dot-grid-color-soft) 1px, transparent 1.1px);
-    background-size: 26px 26px;
-    background-position: 13px 13px;
-    animation: dot-wave-secondary 34s linear infinite;
-    opacity: 0.7;
 }
 
 body > * {
@@ -78,39 +66,21 @@ body > * {
     z-index: 1;
 }
 
-@keyframes dot-wave-primary {
+@keyframes dot-wave {
     0% {
         transform: translate3d(0, 0, 0);
     }
-    25% {
+    50% {
         transform: translate3d(13px, -6px, 0);
     }
-    50% {
-        transform: translate3d(26px, 0, 0);
-    }
-    75% {
-        transform: translate3d(39px, 6px, 0);
-    }
     100% {
-        transform: translate3d(52px, 0, 0);
+        transform: translate3d(26px, 0, 0);
     }
 }
 
-@keyframes dot-wave-secondary {
-    0% {
-        transform: translate3d(0, 0, 0);
-    }
-    25% {
-        transform: translate3d(-13px, 5px, 0);
-    }
-    50% {
-        transform: translate3d(-26px, 0, 0);
-    }
-    75% {
-        transform: translate3d(-39px, -5px, 0);
-    }
-    100% {
-        transform: translate3d(-52px, 0, 0);
+@media (prefers-reduced-motion: reduce) {
+    body::before {
+        animation: none;
     }
 }
 
