@@ -102,52 +102,58 @@
     </div>
 </div>
 
-<section class="faq-section" aria-labelledby="educationFaqTitle">
-    <div class="faq-header">
-        <div>
-            <h2 id="educationFaqTitle">Frequently Asked Questions</h2>
-            <p>Quick notes on the planning assumptions used in the dashboard and stress test.</p>
+<details class="faq-section faq-disclosure" aria-labelledby="educationFaqTitle">
+    <summary class="faq-disclosure-summary">
+        <span id="educationFaqTitle" class="faq-disclosure-title" role="heading" aria-level="2">Frequently Asked Questions</span>
+        <span class="faq-disclosure-description">Planning assumptions, diversified 529 investing, and education stress-test details.</span>
+    </summary>
+    <div class="faq-disclosure-content">
+        <div class="faq-list">
+            <details class="faq-item">
+                <summary>Can a self-directed 529 plan help avoid AUM fees?</summary>
+                <div class="faq-answer">
+                    <p>Yes, if you are comfortable following a written savings and allocation plan. This dashboard keeps the contribution schedule, 529 allocation, education costs, and funding gap visible so you can manage a straightforward plan directly rather than automatically paying an ongoing assets-under-management fee. Advisors can still help with broader tax, estate, or family planning when that additional scope is worthwhile.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary>How can a 529 be diversified with only a few funds?</summary>
+                <div class="faq-answer">
+                    <p>A few broad funds can still own thousands of underlying investments. The saved 529 allocation starts with U.S. total-market and international stock funds, then introduces a total-bond fund as college gets closer. That shifts the plan from 70% U.S. and 30% international stocks in the early years to a 40% stock and 40% bond mix during college. Diversification reduces single-company and single-market concentration, but it does not eliminate investment risk.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary>What assumptions drive the education projection?</summary>
+                <div class="faq-answer">
+                    <p>The dashboard projects each child using the saved initial balance, monthly contribution amount and annual contribution growth, phase-based investment return assumptions, and the selected college path. It compares each 529 balance with the modeled student-loan payoff so you can view the combined funding picture.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary>What changes when I switch the college path?</summary>
+                <div class="faq-answer">
+                    <p>The path toggle changes the cost schedule, not the investments. The direct path uses four years of public-university tuition and room and board; the blended path uses two years of community-college costs followed by two university years. Both plans use the saved inflation rate, and the withdrawal timeline targets 90% of modeled costs from the 529.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary>What assumptions are behind the Monte Carlo stress test?</summary>
+                <div class="faq-answer">
+                    <p>Each refresh runs 10,000 independent paths for one child's 529 and the direct four-year university path. Annual returns are based on the allocation active at each age, then varied with asset-class volatility and normally distributed shocks through a lognormal return model. Tuition and room and board use the 2026 UNC Chapel Hill public-cost assumptions and the child's configured inflation rate. The result is a probability estimate, not a promise about markets or final college costs.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary>What does a successful education stress-test path mean?</summary>
+                <div class="faq-answer">
+                    <p>A simulated path succeeds only when the 529 can pay the full modeled annual cost for all four university years without running out of money. Each child is tested independently, so a strong result for one 529 does not assume its balance can be used for another child's costs.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary>Why do projected and actual balances differ?</summary>
+                <div class="faq-answer">
+                    <p>Differences usually come from real contribution timing, market returns, withdrawals, fund expenses, and changing tuition expectations. The projected-vs-actual table makes those gaps visible by child and year, giving you a practical signal for updating the next plan rather than treating an old projection as fixed.</p>
+                </div>
+            </details>
         </div>
     </div>
-    <div class="faq-list">
-        <details class="faq-item">
-            <summary>What assumptions drive the education projection?</summary>
-            <div class="faq-answer">
-                <p>The dashboard projects each child using the saved contribution schedule, expected investment growth, and the selected college path. It compares 529 balances with any modeled student loan payoff so you can see the combined funding picture.</p>
-            </div>
-        </details>
-        <details class="faq-item">
-            <summary>What changes when I switch the college path?</summary>
-            <div class="faq-answer">
-                <p>The path toggle swaps the cost profile used for the plan. A direct 4-year university path assumes four years of university pricing, while the blended option assumes two years of community college before transferring to a university.</p>
-            </div>
-        </details>
-        <details class="faq-item">
-            <summary>What does the Standard Deductions toggle mean here?</summary>
-            <div class="faq-answer">
-                <p>That toggle applies the planning scenario that uses your standard-deduction path rather than the base case. It is meant to show how a different tax or cash-flow assumption can change the amount available for education funding.</p>
-            </div>
-        </details>
-        <details class="faq-item">
-            <summary>How should I read the stress test result?</summary>
-            <div class="faq-answer">
-                <p>The education stress test is a Monte Carlo estimate for one 529 fund under market variability. Treat it as a probability-based range, not a guarantee. It is most useful for comparing whether the current balance and contribution pace look conservative, tight, or underfunded.</p>
-            </div>
-        </details>
-        <details class="faq-item">
-            <summary>Why do projected and actual balances differ?</summary>
-            <div class="faq-answer">
-                <p>Differences usually come from real contribution timing, market returns, withdrawals, and any changes to tuition assumptions that were not in the original projection. The projected-vs-actual tables help isolate those gaps by year.</p>
-            </div>
-        </details>
-        <details class="faq-item">
-            <summary>Are tuition inflation and future school choices fixed?</summary>
-            <div class="faq-answer">
-                <p>No. These outputs are planning estimates based on the saved scenario inputs. If the expected school type, start date, or future education costs change, update the underlying assumptions and use the refreshed chart as a new baseline.</p>
-            </div>
-        </details>
-    </div>
-</section>
+</details>
 
 <!-- Balance entry form modal -->
 <div id="balanceModal" class="modal" style="display: none;">
